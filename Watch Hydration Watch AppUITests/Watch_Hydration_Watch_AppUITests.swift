@@ -38,4 +38,66 @@ final class Watch_Hydration_Watch_AppUITests: XCTestCase {
             XCUIApplication().launch()
         }
     }
+    
+    func testInitialState() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        XCTAssertTrue(app.buttons["Drink Water"].exists)
+        XCTAssertTrue(app.buttons["+"].exists)
+        XCTAssertTrue(app.buttons["-"].exists)
+        XCTAssertEqual(app.textFields.count, 1)
+        XCTAssertTrue(app.textFields.element(boundBy: 0).exists)
+    }
+
+    func testIncrementDecrementButtons() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        let increment = app.buttons["+"]
+        let decrement = app.buttons["-"]
+
+        XCTAssertTrue(increment.exists)
+        XCTAssertTrue(decrement.exists)
+
+        increment.tap()
+        increment.tap()
+        decrement.tap()
+
+        let drinkButton = app.buttons["Drink Water"]
+        XCTAssertTrue(drinkButton.exists)
+        XCTAssertTrue(drinkButton.isEnabled)
+    }
+
+    func testChooseLiquid() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        let cupTapArea = app.otherElements["CupTapArea"]
+        XCTAssertTrue(cupTapArea.waitForExistence(timeout: 1))
+        cupTapArea.tap()
+        
+        // Select "Coffee"
+        let coffeeButton = app.buttons["Liquid_Coffee"]
+        XCTAssertTrue(coffeeButton.waitForExistence(timeout: 2))
+        coffeeButton.tap()
+
+        // Drink button should now say "Drink Coffee"
+        let drinkButton = app.buttons["Drink Coffee"]
+        XCTAssertTrue(drinkButton.exists)
+    }
+
+    func testDrinkButtonDisabledWhenAmountZero() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        let drinkButton = app.buttons["Drink Water"]
+        XCTAssertFalse(drinkButton.isEnabled)
+
+        app.buttons["+"].tap()
+        XCTAssertTrue(drinkButton.isEnabled)
+
+        app.buttons["-"].tap()
+        XCTAssertFalse(drinkButton.isEnabled)
+    }
 }

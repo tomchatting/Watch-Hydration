@@ -56,9 +56,15 @@ struct WaterInputView: View {
                         }
                 
                 }
-                .onTapGesture {
-                    isChoosingLiquid = true
-                }
+                .overlay(
+                    Rectangle()
+                        .fill(Color.clear)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            isChoosingLiquid = true
+                        }
+                        .accessibilityIdentifier("CupTapArea")
+                )
                 .sheet(isPresented: $isChoosingLiquid) {
                     ScrollView(.vertical) {
                         VStack(spacing: 10) {
@@ -76,6 +82,7 @@ struct WaterInputView: View {
                                     .padding()
                                     .cornerRadius(8)
                                 }
+                                .accessibilityIdentifier("Liquid_\(liquid.name)")
                                 .buttonStyle(.borderedProminent)
                                 .tint(selectedLiquid == liquid ? Color.primary : Color.secondary)
                             }
@@ -90,6 +97,7 @@ struct WaterInputView: View {
                     .onChange(of: liquidAmount) { _, newValue in
                         fillPercent = newValue / maxAmount
                     }
+                    .accessibilityIdentifier("AmountField")
                 Text("mL") // Display the amount with the mL suffix
                     .font(.subheadline.bold())
                                         .frame(width: 25, alignment: .trailing)
