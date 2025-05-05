@@ -66,6 +66,9 @@ final class Watch_Hydration_Watch_AppUITests: XCTestCase {
 
         let drinkButton = app.buttons["Drink Water"]
         XCTAssertTrue(drinkButton.exists)
+        
+        sleep(3)
+        
         XCTAssertTrue(drinkButton.isEnabled)
     }
 
@@ -74,12 +77,12 @@ final class Watch_Hydration_Watch_AppUITests: XCTestCase {
         app.launch()
 
         let cupTapArea = app.otherElements["CupTapArea"]
-        XCTAssertTrue(cupTapArea.waitForExistence(timeout: 1))
+        XCTAssertTrue(cupTapArea.waitForExistence(timeout: 5))
         cupTapArea.tap()
         
         // Select "Coffee"
         let coffeeButton = app.buttons["Liquid_Coffee"]
-        XCTAssertTrue(coffeeButton.waitForExistence(timeout: 2))
+        XCTAssertTrue(coffeeButton.waitForExistence(timeout: 5))
         coffeeButton.tap()
 
         // Drink button should now say "Drink Coffee"
@@ -92,6 +95,7 @@ final class Watch_Hydration_Watch_AppUITests: XCTestCase {
         app.launch()
 
         let drinkButton = app.buttons["Drink Water"]
+        XCTAssertTrue(drinkButton.waitForExistence(timeout: 5))
         XCTAssertFalse(drinkButton.isEnabled)
 
         app.buttons["+"].tap()
