@@ -35,6 +35,26 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		A711C1452DC6712C00A6D309 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A711C1662DC6774000A6D309 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A77BBE702DC5872500D2B633 /* Embed Watch Content */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -49,15 +69,36 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		A711C1322DC6712B00A6D309 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		A711C1342DC6712B00A6D309 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		A77BBE442DC5872400D2B633 /* Watch Hydration.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Watch Hydration.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A77BBE4A2DC5872400D2B633 /* Watch Hydration Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Watch Hydration Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A77BBE592DC5872500D2B633 /* Watch Hydration Watch AppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Watch Hydration Watch AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A77BBE632DC5872500D2B633 /* Watch Hydration Watch AppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Watch Hydration Watch AppUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A77BBE8C2DC588BF00D2B633 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		A77BBE952DC5899E00D2B633 /* Exceptions for "Watch Hydration Watch App" folder in "Watch Hydration Watch App" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = A77BBE492DC5872400D2B633 /* Watch Hydration Watch App */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		A711C15C2DC6774000A6D309 /* Watch Hydration SharedTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "Watch Hydration SharedTests";
+			sourceTree = "<group>";
+		};
 		A77BBE4E2DC5872400D2B633 /* Watch Hydration Watch App */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				A77BBE952DC5899E00D2B633 /* Exceptions for "Watch Hydration Watch App" folder in "Watch Hydration Watch App" target */,
+			);
 			path = "Watch Hydration Watch App";
 			sourceTree = "<group>";
 		};
@@ -98,12 +139,24 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		A711C1312DC6712B00A6D309 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				A711C1322DC6712B00A6D309 /* WidgetKit.framework */,
+				A711C1342DC6712B00A6D309 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		A77BBE3D2DC5872400D2B633 = {
 			isa = PBXGroup;
 			children = (
+				A77BBE8C2DC588BF00D2B633 /* Info.plist */,
 				A77BBE4E2DC5872400D2B633 /* Watch Hydration Watch App */,
 				A77BBE5C2DC5872500D2B633 /* Watch Hydration Watch AppTests */,
 				A77BBE662DC5872500D2B633 /* Watch Hydration Watch AppUITests */,
+				A711C15C2DC6774000A6D309 /* Watch Hydration SharedTests */,
+				A711C1312DC6712B00A6D309 /* Frameworks */,
 				A77BBE452DC5872400D2B633 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -148,6 +201,8 @@
 				A77BBE462DC5872400D2B633 /* Sources */,
 				A77BBE472DC5872400D2B633 /* Frameworks */,
 				A77BBE482DC5872400D2B633 /* Resources */,
+				A711C1452DC6712C00A6D309 /* Embed Foundation Extensions */,
+				A711C1662DC6774000A6D309 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -244,6 +299,8 @@
 			);
 			mainGroup = A77BBE3D2DC5872400D2B633;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A77BBE452DC5872400D2B633 /* Products */;
 			projectDirPath = "";
@@ -452,11 +509,13 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Watch Hydration Watch App/Watch Hydration Watch App.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 4DXF4PAP5P;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Watch Hydration Watch App/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Watch Hydration";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_WKWatchOnly = YES;
@@ -481,11 +540,13 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Watch Hydration Watch App/Watch Hydration Watch App.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 4DXF4PAP5P;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Watch Hydration Watch App/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Watch Hydration";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_WKWatchOnly = YES;
@@ -510,10 +571,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 12;
 				DEVELOPMENT_TEAM = 4DXF4PAP5P;
+				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Watch Hydration";
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 0.9;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.thomaschatting.Watch-Hydration";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -525,10 +587,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 12;
 				DEVELOPMENT_TEAM = 4DXF4PAP5P;
+				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Watch Hydration";
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 0.9;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.thomaschatting.Watch-Hydration";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
