@@ -12,7 +12,6 @@ import SwiftUI
 class HealthKitManager {
     static let shared = HealthKitManager()
     private let healthStore = HKHealthStore()
-    @StateObject private var healthKitStatus = HealthKitAuthStatus()
     
     private init() {}
     

@@ -2,38 +2,42 @@ import SwiftUI
 import UserNotifications
 
 struct ContentView: View {
-    @AppStorage("hydrationGoal") private var goal: Double = 2000 
+    @AppStorage("hydrationGoal") private var goal: Double = 2000
+    @AppStorage("hasOnboarded") private var hasOnboarded: Bool = false
 
-        let defaultGoal: Double = 2000
-    
+    private let defaultGoal: Double = 2000
+
     var body: some View {
         TabView {
-            WaterInputView()
-            WaterProgressView()
-            SettingsView()
+            if !hasOnboarded {
+                OnboardingView {
+                    hasOnboarded = true
+                }
+            } else {
+                WaterInputView()
+                WaterProgressView()
+                SettingsView()
+            }
         }
         .tabViewStyle(PageTabViewStyle(indexDisplayMode: .automatic))
         .onAppear {
-            HealthKitManager.shared.requestAuthorization { success, error in
-                if !success {
-                    print("HealthKit not authorized: \(error?.localizedDescription ?? "Unknown")")
+            if hasOnboarded {
+                if goal == 0 {
+                    goal = defaultGoal
+                    UserDefaults.standard.set(goal, forKey: "hydrationGoal")
                 }
-            }
-            
-            if goal == 0 {
-                goal = defaultGoal
-                UserDefaults.standard.set(goal, forKey: "hydrationGoal")
-            }
-            
-            NotificationManager.requestAuthorizationIfNeeded()
-            UNUserNotificationCenter.current().getNotificationSettings { settings in
-                if settings.authorizationStatus == .authorized {
-                    NotificationManager.scheduleHydrationSummaryIfNeeded()
+
+                NotificationManager.requestAuthorizationIfNeeded()
+                UNUserNotificationCenter.current().getNotificationSettings { settings in
+                    if settings.authorizationStatus == .authorized {
+                        NotificationManager.scheduleHydrationSummaryIfNeeded()
+                    }
                 }
             }
         }
     }
 }
+
 #Preview {
     ContentView()
 }
