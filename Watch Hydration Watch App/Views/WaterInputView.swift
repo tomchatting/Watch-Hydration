@@ -16,6 +16,7 @@ struct WaterInputView: View {
     @State private var waveOffset = 0.0
     @FocusState private var isEditingAmount: Bool
     @State private var isChoosingLiquid = false
+    @StateObject private var healthKitStatus = HealthKitAuthStatus()
 
     struct LiquidData {
         static let all: [LiquidType] = [
@@ -118,20 +119,19 @@ struct WaterInputView: View {
             }
 
             Button("Drink \(selectedLiquid.name)") {
+                healthKitStatus.requestAuthorization()
+
                 isLogging = true
                 
                 // to stop a race condition with what we're doing below
                 let currentLiquid = selectedLiquid
                 let valueToLog = liquidAmount * currentLiquid.coefficient
                 
-                HealthKitManager.shared.requestAuthorization { success, error in
-                    if success {
-                        HealthKitManager.shared.logWater(amountInML: valueToLog)
-                    } else {
-                        print("HealthKit not authorized: \(error?.localizedDescription ?? "Unknown")")
-                    }
-                }
+                logStore.log(amount: valueToLog)
 
+                if healthKitStatus.isAuthorized {
+                    HealthKitManager.shared.logWater(amountInML: valueToLog)
+                }
                 
                 animateWaterDecrease()
             }

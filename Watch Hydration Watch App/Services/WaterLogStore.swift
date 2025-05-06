@@ -11,6 +11,7 @@ import SwiftUI
 
 class WaterLogStore: ObservableObject {
 	@Published var todayLogs: [Int: Double] = [:] // [hour: total ml]
+    @Published var entries: [WaterLogEntry] = []
 
 	private let calendar = Calendar.current
 	private let storageKey = "WaterLogStore.today"
@@ -19,34 +20,36 @@ class WaterLogStore: ObservableObject {
 		load()
 	}
 
-	func log(amount: Double) {
-		let hour = calendar.component(.hour, from: Date())
-		todayLogs[hour, default: 0] += amount
-		save()
+    func log(amount: Double, date: Date = Date()) {
+        let entry = WaterLogEntry(date: date, amount: amount)
+        entries.insert(entry, at: 0)
+        save()
 	}
+    
+    func save() {
+        if let data = try? JSONEncoder().encode(entries) {
+            UserDefaults.standard.set(data, forKey: storageKey)
+        }
+    }
 
 	func totalToday() -> Double {
 		todayLogs.values.reduce(0, +)
 	}
 
-	private func save() {
-		if let data = try? JSONEncoder().encode(todayLogs) {
-			UserDefaults.standard.set(data, forKey: storageKey)
-		}
-	}
+    private func load() {
+        if let data = UserDefaults.standard.data(forKey: storageKey),
+           let savedEntries = try? JSONDecoder().decode([WaterLogEntry].self, from: data) {
+            self.entries = savedEntries
+        }
+    }
+    
+    func syncToHealthKitIfAuthorized(healthKitStatus: HealthKitAuthStatus) {
+        guard healthKitStatus.isAuthorized else { return }
 
-	private func load() {
-		guard let data = UserDefaults.standard.data(forKey: storageKey),
-		      let logs = try? JSONDecoder().decode([Int: Double].self, from: data)
-		else { return }
-
-		// Only keep today’s logs
-		let today = calendar.startOfDay(for: Date())
-		let savedDate = UserDefaults.standard.object(forKey: "\(storageKey).date") as? Date ?? today
-		if calendar.isDate(savedDate, inSameDayAs: today) {
-			todayLogs = logs
-		}
-	}
+        for entry in entries where Calendar.current.isDateInToday(entry.date) {
+            HealthKitManager.shared.logWater(amountInML: entry.amount, date: entry.date)
+        }
+    }
 
 	func resetForNewDay() {
 		todayLogs = [:]

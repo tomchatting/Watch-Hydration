@@ -7,10 +7,21 @@
 
 
 import HealthKit
+import SwiftUI
 
 class HealthKitManager {
     static let shared = HealthKitManager()
     private let healthStore = HKHealthStore()
+    @StateObject private var healthKitStatus = HealthKitAuthStatus()
+    
+    private init() {}
+    
+    var isWaterWriteAuthorized: Bool {
+            guard HKHealthStore.isHealthDataAvailable() else { return false }
+            let type = HKObjectType.quantityType(forIdentifier: .dietaryWater)!
+            let status = healthStore.authorizationStatus(for: type)
+            return status == .sharingAuthorized
+        }
 
     func requestAuthorization(completion: ((Bool, Error?) -> Void)? = nil) {
             guard HKHealthStore.isHealthDataAvailable(),
@@ -27,10 +38,10 @@ class HealthKitManager {
             }
         }
 
-    func logWater(amountInML: Double) {
+    func logWater(amountInML: Double, date: Date? = Date()) {
         let waterType = HKQuantityType.quantityType(forIdentifier: .dietaryWater)!
         let quantity = HKQuantity(unit: .literUnit(with: .milli), doubleValue: amountInML)
-        let sample = HKQuantitySample(type: waterType, quantity: quantity, start: Date(), end: Date())
+        let sample = HKQuantitySample(type: waterType, quantity: quantity, start: date!, end: date!)
 
         healthStore.save(sample) { success, error in
             if let error = error {

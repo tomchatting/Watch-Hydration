@@ -5,8 +5,8 @@
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>NSHealthShareUsageDescription</key>
-	<string>We need access to your health data to track hydration levels.</string>
+	<string>Access to your health data is required to display your water intake for the day.</string>
 	<key>NSHealthUpdateUsageDescription</key>
-	<string>We need access to update your hydration data.</string>
+	<string>This functionality is required to update your water intake, writing to HealthKit.</string>
 </dict>
 </plist>

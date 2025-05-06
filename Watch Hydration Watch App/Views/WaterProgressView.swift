@@ -10,10 +10,13 @@ import HealthKit
 
 struct WaterProgressView: View {
     @State private var total: Double = 0
-    @State private var entries: [HKQuantitySample] = []
+    @State private var entries: [WaterLogEntry] = []
+    @StateObject private var healthKitStatus = HealthKitAuthStatus()
+    @StateObject private var logStore = WaterLogStore()
     @AppStorage("hydrationGoal") private var goal: Double = 2000
 
     var body: some View {
+        
         let progress = total / goal
         let progressTrim = min(progress, 1)
 
@@ -58,12 +61,12 @@ struct WaterProgressView: View {
     }
 
     private var timelineEntries: some View {
-        ForEach(entries.filter { $0.quantity.doubleValue(for: .literUnit(with: .milli)) > 0 }, id: \.uuid) { sample in
-            timelineEntryView(for: sample)
+        ForEach(entries.filter { $0.amount > 0 }) { entry in
+            timelineEntryView(for: entry)
         }
     }
 
-    private func timelineEntryView(for sample: HKQuantitySample) -> some View {
+    private func timelineEntryView(for entry: WaterLogEntry) -> some View {
         HStack(alignment: .top, spacing: 8) {
             ZStack {
                 Rectangle()
@@ -76,10 +79,9 @@ struct WaterProgressView: View {
             .frame(width: 10)
 
             VStack(alignment: .leading, spacing: 2) {
-                let amount = sample.quantity.doubleValue(for: .literUnit(with: .milli))
-                Text("\(Int(amount)) mL")
+                Text("\(Int(entry.amount)) mL")
                     .bold()
-                Text(timeFormatter.string(from: sample.startDate))
+                Text(timeFormatter.string(from: entry.date))
                     .font(.caption2)
                     .foregroundColor(.gray)
             }
@@ -97,11 +99,26 @@ struct WaterProgressView: View {
     // MARK: - Load Data
 
     private func loadWaterSamples() {
-        HealthKitManager.shared.getTodayWaterSamples { samples in
-            self.entries = samples.sorted(by: { $0.startDate > $1.startDate })
-            self.total = samples.reduce(0) {
-                $0 + $1.quantity.doubleValue(for: .literUnit(with: .milli))
+        if healthKitStatus.isAuthorized {
+            HealthKitManager.shared.getTodayWaterSamples { samples in
+                DispatchQueue.main.async {
+                    self.entries = samples.map {
+                        WaterLogEntry(date: $0.startDate, amount: $0.quantity.doubleValue(for: .literUnit(with: .milli)))
+                    }.sorted(by: { $0.date > $1.date })
+                    
+                    self.total = self.entries.reduce(0) { $0 + $1.amount }
+                }
             }
+        } else {
+            let localEntries = logStore.entries.filter {
+                Calendar.current.isDateInToday($0.date)
+            }
+            
+            self.entries = localEntries.map {
+                WaterLogEntry(date: $0.date, amount: $0.amount)
+            }.sorted(by: { $0.date > $1.date })
+            
+            self.total = self.entries.reduce(0) { $0 + $1.amount }
         }
     }
 }
