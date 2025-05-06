@@ -119,8 +119,6 @@ struct WaterInputView: View {
             }
 
             Button("Drink \(selectedLiquid.name)") {
-                healthKitStatus.requestAuthorization()
-
                 isLogging = true
                 
                 // to stop a race condition with what we're doing below
@@ -129,8 +127,10 @@ struct WaterInputView: View {
                 
                 logStore.log(amount: valueToLog)
 
-                if healthKitStatus.isAuthorized {
-                    HealthKitManager.shared.logWater(amountInML: valueToLog)
+                healthKitStatus.requestAuthorization {
+                    if healthKitStatus.isAuthorized {
+                        HealthKitManager.shared.logWater(amountInML: valueToLog)
+                    }
                 }
                 
                 animateWaterDecrease()

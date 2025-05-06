@@ -29,10 +29,11 @@ final class HealthKitAuthStatus: ObservableObject {
 		isAuthorized = (status == .sharingAuthorized)
 	}
 
-	func requestAuthorization() {
+    func requestAuthorization(completion: @escaping () -> Void) {
 		healthStore.requestAuthorization(toShare: [waterType], read: [waterType]) { success, error in
 			DispatchQueue.main.async {
 				self.refreshStatus()
+                completion()
 			}
 		}
 	}
