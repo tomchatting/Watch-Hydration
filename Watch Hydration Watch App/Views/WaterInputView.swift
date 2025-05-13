@@ -13,9 +13,7 @@ struct WaterInputView: View {
     @State private var fillPercent: Double = 0
     @StateObject private var logStore = WaterLogStore()
     @State private var crownValue: Double = 0
-    @State private var crownIncrement: Double = 1
     @State private var lastCrownValue: Double = 0
-    @State private var lastUpdateTime = Date()
     @State private var isLogging: Bool = false
     @State private var waveOffset = 0.0
     @FocusState private var isEditingAmount: Bool
@@ -107,7 +105,7 @@ struct WaterInputView: View {
                         }
                         .accessibilityIdentifier("AmountField")
                         .disabled(true)
-                    Text("mL") // Display the amount with the mL suffix
+                    Text("mL")
                         .font(.subheadline.bold())
                         .frame(width: 25, alignment: .trailing)
                 }
@@ -167,30 +165,21 @@ struct WaterInputView: View {
         .focusable(true)
         .digitalCrownRotation(
             $crownValue,
-            from: -1000,
-            through: 1000,
-            by: 0.1,
-            sensitivity: .medium,
+            from: 0,
+            through: maxAmount,
+            by: 1,
+            sensitivity: .high,
             isContinuous: false,
             isHapticFeedbackEnabled: true
         )
         .onChange(of: crownValue) { _, newValue in
             let delta = newValue - lastCrownValue
-            let now = Date()
-            let timeElapsed = now.timeIntervalSince(lastUpdateTime)
-
-            if timeElapsed > 0 {
-                let speed = abs(delta) / timeElapsed
-                crownIncrement = speed > 5 ? 50 : 1
-            }
-
-            let raw = liquidAmount + delta * crownIncrement
-            let stepped = raw.rounded()
-            liquidAmount = max(0, min(stepped, maxAmount))
+            
+            liquidAmount += delta
+            liquidAmount = round(liquidAmount)
+            liquidAmount = min(max(0, liquidAmount), maxAmount)
             fillPercent = liquidAmount / maxAmount
-
             lastCrownValue = newValue
-            lastUpdateTime = now
         }
         .onAppear {
             progress.loadToday()
@@ -201,17 +190,15 @@ struct WaterInputView: View {
     func animateWaterDecrease() {
             let decrementValue = 1.0
 
-            // Timer to update liquidAmount in increments over the duration
             Timer.scheduledTimer(withTimeInterval: 0.001, repeats: true) { timer in
                 if liquidAmount > 0 {
-                    // Decrease liquidAmount and fillPercent incrementally
                     withAnimation(.linear(duration: 0.001)) {
                         liquidAmount = max(0, liquidAmount - decrementValue)
                     }
                 } else {
                     timer.invalidate() // Stop the timer when liquidAmount reaches 0
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.001) {
-                        isLogging = false // Re-enable the button after animation
+                        isLogging = false
                     }
                 }
             }
