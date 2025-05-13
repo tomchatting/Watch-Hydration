@@ -44,7 +44,7 @@ struct SettingsView: View {
                         .font(.caption)
                         .padding(.top, 5)
                 } else {
-                    Label("HealthKit enabled", systemImage: "exclamationmark.triangle.fill")
+                    Label("HealthKit disabled", systemImage: "exclamationmark.triangle.fill")
                         .foregroundColor(.yellow)
                         .font(.caption)
                         .padding(.top, 5)

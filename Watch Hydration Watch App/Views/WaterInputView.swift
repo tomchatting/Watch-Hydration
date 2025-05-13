@@ -12,7 +12,6 @@ struct WaterInputView: View {
     @State private var liquidAmount: Double = 0
     @State private var fillPercent: Double = 0
     @StateObject private var logStore = WaterLogStore()
-    @State private var crownValue: Double = 0
     @State private var isLogging: Bool = false
     @State private var waveOffset = 0.0
     @FocusState private var isEditingAmount: Bool
@@ -20,6 +19,10 @@ struct WaterInputView: View {
     @StateObject private var healthKitStatus = HealthKitAuthStatus()
     @StateObject var animationManager = BubbleConfettiManager()
     @StateObject private var progress = HydrationProgress()
+    @State private var crownValue: Double = 0
+    @State private var previousCrownValue: Double = 0
+    @State private var lastUpdateTime: Date = Date()
+    @State private var crownIncrement: Double = 1
 
     struct LiquidData {
         static let all: [LiquidType] = [
@@ -103,11 +106,37 @@ struct WaterInputView: View {
                             fillPercent = newValue / maxAmount
                         }
                         .accessibilityIdentifier("AmountField")
-                        .disabled(true)
                     Text("mL") // Display the amount with the mL suffix
                         .font(.subheadline.bold())
                         .frame(width: 25, alignment: .trailing)
                 }
+                .focusable(true)
+                 .digitalCrownRotation(
+                     $crownValue,
+                     from: 0,
+                     through: maxAmount,
+                     by: crownIncrement,
+                     sensitivity: .medium,
+                     isContinuous: true,
+                     isHapticFeedbackEnabled: true
+                 )
+                 .onChange(of: crownValue) { _, newValue in
+                     let intVal = max(0, min(Int(newValue), Int(maxAmount)))
+                     liquidAmount = Double(intVal)
+                     fillPercent = liquidAmount / maxAmount
+                     
+                     let timeElapsed = Date().timeIntervalSince(lastUpdateTime)
+                     let delta = newValue - previousCrownValue
+                     
+                     if abs(delta) / timeElapsed > 0.05 {
+                         crownIncrement = 50
+                     } else {
+                         crownIncrement = 1
+                     }
+                     
+                     previousCrownValue = newValue
+                     lastUpdateTime = Date()
+                 }
                 
                 HStack {
                     Button("-") {
@@ -160,21 +189,6 @@ struct WaterInputView: View {
             if animationManager.showConfetti {
                 ConfettiView()
             }
-        }
-        .focusable(true)
-        .digitalCrownRotation(
-            $crownValue,
-            from: 0,
-            through: maxAmount,
-            by: 1,
-            sensitivity: .medium,
-            isContinuous: false,
-            isHapticFeedbackEnabled: true
-        )
-        .onChange(of: crownValue) { _, newValue in
-            let intVal = max(0, min(Int(newValue), Int(maxAmount)))
-            liquidAmount = Double(intVal)
-            fillPercent = liquidAmount / maxAmount
         }
         .onAppear {
             progress.loadToday()
