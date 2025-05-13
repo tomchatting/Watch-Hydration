@@ -1,3 +1,12 @@
+//
+//  BubbleView.swift
+//  Watch Hydration
+//
+//  Created by Thomas Chatting on 13/05/2025.
+//
+
+import SwiftUI
+
 struct BubbleView: View {
 	let id: UUID
 	let xOffset: CGFloat = .random(in: -40...40)

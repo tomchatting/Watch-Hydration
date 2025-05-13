@@ -5,7 +5,6 @@
 //  Created by Thomas Chatting on 03/05/2025.
 //
 
-
 import SwiftUI
 
 struct SettingsView: View {
@@ -13,6 +12,14 @@ struct SettingsView: View {
     @StateObject private var healthKitStatus = HealthKitAuthStatus()
     let minGoal: Double = 500
     let maxGoal: Double = 3000
+    
+    var appVersion: String {
+        return Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"
+    }
+    
+    var appBuild: String {
+        return Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "Unknown"
+    }
 
     var body: some View {
         VStack {
@@ -42,6 +49,13 @@ struct SettingsView: View {
                         .font(.caption)
                         .padding(.top, 5)
                 }
+            }
+            
+            VStack {
+                Text("Version: \(appVersion) (\(appBuild))")
+                    .font(.caption2)
+                Text("© 2025 Thomas Chatting")
+                    .font(.caption2)
             }
         }
     }

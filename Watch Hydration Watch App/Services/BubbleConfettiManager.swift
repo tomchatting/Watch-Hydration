@@ -1,3 +1,11 @@
+//
+//  BubbleConfettiManager.swift
+//  Watch Hydration
+//
+//  Created by Thomas Chatting on 13/05/2025.
+//
+
+
 import SwiftUI
 import Combine
 
@@ -17,7 +25,7 @@ class BubbleConfettiManager: ObservableObject {
 
 	func triggerConfetti() {
 		showConfetti = true
-		DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+		DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
 			self.showConfetti = false
 		}
 	}

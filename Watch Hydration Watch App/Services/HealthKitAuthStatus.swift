@@ -5,7 +5,6 @@
 //  Created by Thomas Chatting on 06/05/2025.
 //
 
-
 import Foundation
 import HealthKit
 import Combine

@@ -12,11 +12,14 @@ struct WaterInputView: View {
     @State private var liquidAmount: Double = 0
     @State private var fillPercent: Double = 0
     @StateObject private var logStore = WaterLogStore()
+    @State private var crownValue: Double = 0
     @State private var isLogging: Bool = false
     @State private var waveOffset = 0.0
     @FocusState private var isEditingAmount: Bool
     @State private var isChoosingLiquid = false
     @StateObject private var healthKitStatus = HealthKitAuthStatus()
+    @StateObject var animationManager = BubbleConfettiManager()
+    @StateObject private var progress = HydrationProgress()
 
     struct LiquidData {
         static let all: [LiquidType] = [
@@ -35,17 +38,18 @@ struct WaterInputView: View {
     let maxAmount: Double = 1000
 
     var body: some View {
-        VStack {
-            HStack {
-                ZStack(alignment: .bottom) {
-                    CupShape()
-                        .stroke(lineWidth: 2)
-                        .frame(width: 50, height: 70)
-                    
-                    ZStack {
+        ZStack {
+            VStack {
+                HStack {
+                    ZStack(alignment: .bottom) {
+                        CupShape()
+                            .stroke(lineWidth: 2)
+                            .frame(width: 50, height: 70)
+                        
+                        ZStack {
                             WaveShape(offset: waveOffset, amplitude: 3)
                                 .fill(selectedLiquid.color.opacity(0.6))
-
+                            
                             WaveShape(offset: waveOffset + .pi, amplitude: 3)
                                 .fill(selectedLiquid.color.opacity(0.6))
                         }
@@ -55,89 +59,127 @@ struct WaterInputView: View {
                         .onReceive(timer) { _ in
                             waveOffset += 0.1
                         }
-                
-                }
-                .overlay(
-                    Rectangle()
-                        .fill(Color.clear)
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            isChoosingLiquid = true
-                        }
-                        .accessibilityIdentifier("CupTapArea")
-                )
-                .sheet(isPresented: $isChoosingLiquid) {
-                    ScrollView(.vertical) {
-                        VStack(spacing: 10) {
-                            ForEach(LiquidData.all) { liquid in
-                                Button(action: {
-                                    selectedLiquid = liquid
-                                    isChoosingLiquid = false
-                                }) {
-                                    HStack {
-                                        Circle().fill(liquid.color).frame(width: 20, height: 20)
-                                        Text(liquid.name)
-                                        Text("(\(String(format: "%.2f",liquid.coefficient)))")
-                                            .font(.caption2)
+                        
+                    }
+                    .overlay(
+                        Rectangle()
+                            .fill(Color.clear)
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                isChoosingLiquid = true
+                            }
+                            .accessibilityIdentifier("CupTapArea")
+                    )
+                    .sheet(isPresented: $isChoosingLiquid) {
+                        ScrollView(.vertical) {
+                            VStack(spacing: 10) {
+                                ForEach(LiquidData.all) { liquid in
+                                    Button(action: {
+                                        selectedLiquid = liquid
+                                        isChoosingLiquid = false
+                                    }) {
+                                        HStack {
+                                            Circle().fill(liquid.color).frame(width: 20, height: 20)
+                                            Text(liquid.name)
+                                            Text("(\(String(format: "%.2f",liquid.coefficient)))")
+                                                .font(.caption2)
+                                        }
+                                        .padding()
+                                        .cornerRadius(8)
                                     }
-                                    .padding()
-                                    .cornerRadius(8)
+                                    .accessibilityIdentifier("Liquid_\(liquid.name)")
+                                    .buttonStyle(.borderedProminent)
+                                    .tint(selectedLiquid == liquid ? Color.primary : Color.secondary)
                                 }
-                                .accessibilityIdentifier("Liquid_\(liquid.name)")
-                                .buttonStyle(.borderedProminent)
-                                .tint(selectedLiquid == liquid ? Color.primary : Color.secondary)
                             }
                         }
                     }
+                    
+                    TextField("Amount", value: $liquidAmount, format: .number)
+                        .focused($isEditingAmount)
+                        .font(.title3.bold())
+                        .frame(width: 75, alignment: .trailing)
+                        .onChange(of: liquidAmount) { _, newValue in
+                            fillPercent = newValue / maxAmount
+                        }
+                        .accessibilityIdentifier("AmountField")
+                        .disabled(true)
+                    Text("mL") // Display the amount with the mL suffix
+                        .font(.subheadline.bold())
+                        .frame(width: 25, alignment: .trailing)
                 }
-             
-                TextField("Amount", value: $liquidAmount, format: .number)
-                    .focused($isEditingAmount)
-                    .font(.title3.bold())
-                    .frame(width: 75, alignment: .trailing)
-                    .onChange(of: liquidAmount) { _, newValue in
-                        fillPercent = newValue / maxAmount
+                
+                HStack {
+                    Button("-") {
+                        liquidAmount = max(0, liquidAmount - 50)
+                        fillPercent = liquidAmount / maxAmount
                     }
-                    .accessibilityIdentifier("AmountField")
-                Text("mL") // Display the amount with the mL suffix
-                    .font(.subheadline.bold())
-                                        .frame(width: 25, alignment: .trailing)
-            }
-
-            HStack {
-                Button("-") {
-                    liquidAmount = max(0, liquidAmount - 50)
-                    fillPercent = liquidAmount / maxAmount
+                    .disabled(liquidAmount == 0 || isLogging)
+                    
+                    Button("+") {
+                        liquidAmount = min(maxAmount, liquidAmount + 50)
+                        fillPercent = liquidAmount / maxAmount
+                    }
+                    .disabled(liquidAmount == maxAmount || isLogging)
+                }
+                
+                Button("Drink \(selectedLiquid.name)") {
+                    isLogging = true
+                    
+                    // to stop a race condition with what we're doing below
+                    let currentLiquid = selectedLiquid
+                    let valueToLog = liquidAmount * currentLiquid.coefficient
+                    
+                    logStore.log(amount: valueToLog)
+                    
+                    healthKitStatus.requestAuthorization {
+                        if healthKitStatus.isAuthorized {
+                            HealthKitManager.shared.logWater(amountInML: valueToLog)
+                        }
+                    }
+                    
+                    animateWaterDecrease()
+                    
+                    print("\(progress.total) / \(progress.goal)")
+                    if (progress.total >= progress.goal)
+                    {
+                        animationManager.triggerConfetti()
+                    } else {
+                        animationManager.triggerBubbles()
+                    }
+                    
                 }
                 .disabled(liquidAmount == 0 || isLogging)
-                
-                Button("+") {
-                    liquidAmount = min(maxAmount, liquidAmount + 50)
-                    fillPercent = liquidAmount / maxAmount
-                }
-                .disabled(liquidAmount == maxAmount || isLogging)
+            }
+            // Bubbles
+            ForEach(animationManager.bubbles, id: \.self) { id in
+                BubbleView(id: id)
             }
 
-            Button("Drink \(selectedLiquid.name)") {
-                isLogging = true
-                
-                // to stop a race condition with what we're doing below
-                let currentLiquid = selectedLiquid
-                let valueToLog = liquidAmount * currentLiquid.coefficient
-                
-                logStore.log(amount: valueToLog)
-
-                healthKitStatus.requestAuthorization {
-                    if healthKitStatus.isAuthorized {
-                        HealthKitManager.shared.logWater(amountInML: valueToLog)
-                    }
-                }
-                
-                animateWaterDecrease()
+            // Confetti
+            if animationManager.showConfetti {
+                ConfettiView()
             }
-            .disabled(liquidAmount == 0 || isLogging)
-            
         }
+        .focusable(true)
+        .digitalCrownRotation(
+            $crownValue,
+            from: 0,
+            through: maxAmount,
+            by: 1,
+            sensitivity: .medium,
+            isContinuous: false,
+            isHapticFeedbackEnabled: true
+        )
+        .onChange(of: crownValue) { _, newValue in
+            let intVal = max(0, min(Int(newValue), Int(maxAmount)))
+            liquidAmount = Double(intVal)
+            fillPercent = liquidAmount / maxAmount
+        }
+        .onAppear {
+            progress.loadToday()
+        }
+        .environmentObject(progress)
     }
     
     func animateWaterDecrease() {

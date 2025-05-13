@@ -1,3 +1,12 @@
+//
+//  HydrationProgress.swift
+//  Watch Hydration
+//
+//  Created by Thomas Chatting on 13/05/2025.
+//
+
+import SwiftUI
+
 class HydrationProgress: ObservableObject {
 	@Published var total: Double = 0
 	@Published var entries: [WaterLogEntry] = []

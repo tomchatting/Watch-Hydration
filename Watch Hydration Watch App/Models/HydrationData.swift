@@ -5,15 +5,6 @@
 //  Created by Thomas Chatting on 03/05/2025.
 //
 
-
-//
-//  HydrationData.swift
-//  WaterBoy
-//
-//  Created by Thomas Chatting on 02/05/2025.
-//
-
-
 import Foundation
 
 class HydrationData {

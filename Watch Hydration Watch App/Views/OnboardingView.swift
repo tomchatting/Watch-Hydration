@@ -17,6 +17,8 @@ struct OnboardingView: View {
                         .bold()
                 }
                 
+                Text("This app allows you to easily log your liquid intake, with HealthKit integration.")
+                
                 Text("Watch Hydration uses HealthKit to:")
                     .font(.headline)
 
