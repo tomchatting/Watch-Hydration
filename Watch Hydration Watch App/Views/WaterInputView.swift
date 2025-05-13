@@ -169,7 +169,7 @@ struct WaterInputView: View {
             $crownValue,
             from: -1000,
             through: 1000,
-            by: 1,
+            by: 0.1,
             sensitivity: .medium,
             isContinuous: false,
             isHapticFeedbackEnabled: true
