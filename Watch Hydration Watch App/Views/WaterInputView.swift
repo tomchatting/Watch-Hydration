@@ -168,7 +168,7 @@ struct WaterInputView: View {
             from: 0,
             through: maxAmount,
             by: 1,
-            sensitivity: .high,
+            sensitivity: .medium,
             isContinuous: false,
             isHapticFeedbackEnabled: true
         )
