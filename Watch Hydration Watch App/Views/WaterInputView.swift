@@ -140,8 +140,8 @@ struct WaterInputView: View {
                     }
                     
                     animateWaterDecrease()
+                    progress.loadToday()
                     
-                    print("\(progress.total) / \(progress.goal)")
                     if (progress.total >= progress.goal)
                     {
                         animationManager.triggerConfetti()
@@ -161,25 +161,6 @@ struct WaterInputView: View {
             if animationManager.showConfetti {
                 ConfettiView()
             }
-        }
-        .focusable(true)
-        .digitalCrownRotation(
-            $crownValue,
-            from: 0,
-            through: maxAmount,
-            by: 1,
-            sensitivity: .medium,
-            isContinuous: false,
-            isHapticFeedbackEnabled: true
-        )
-        .onChange(of: crownValue) { _, newValue in
-            let delta = newValue - lastCrownValue
-            
-            liquidAmount += delta
-            liquidAmount = round(liquidAmount)
-            liquidAmount = min(max(0, liquidAmount), maxAmount)
-            fillPercent = liquidAmount / maxAmount
-            lastCrownValue = newValue
         }
         .onAppear {
             progress.loadToday()
