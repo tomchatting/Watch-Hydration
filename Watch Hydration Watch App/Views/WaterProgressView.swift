@@ -82,6 +82,7 @@ struct WaterProgressView: View {
                 Text(timeFormatter.string(from: entry.date))
                     .font(.caption2)
                     .foregroundColor(.gray)
+                    .padding([.bottom, .trailing], 10)
             }
         }
     }

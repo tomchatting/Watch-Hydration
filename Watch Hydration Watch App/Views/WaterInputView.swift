@@ -44,7 +44,7 @@ struct WaterInputView: View {
                 HStack {
                     ZStack(alignment: .bottom) {
                         CupShape()
-                            .stroke(lineWidth: 2)
+                            .stroke(lineWidth: 1.5)
                             .frame(width: 50, height: 70)
                         
                         ZStack {
@@ -152,6 +152,15 @@ struct WaterInputView: View {
                 }
                 .disabled(liquidAmount == 0 || isLogging)
             }
+            
+            Slider(value: $liquidAmount, in: 0...maxAmount, step: 1)
+                .onChange(of: liquidAmount) { _, newValue in
+                    liquidAmount = newValue
+                }
+                .frame(width: 0, height: 0)
+                .clipped()
+                .opacity(0)
+            
             // Bubbles
             ForEach(animationManager.bubbles, id: \.self) { id in
                 BubbleView(id: id)
