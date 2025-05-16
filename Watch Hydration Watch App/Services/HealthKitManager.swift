@@ -64,5 +64,13 @@ class HealthKitManager {
         }
         healthStore.execute(query)
     }
+    
+    func getTodayWaterSamples() async -> [HKQuantitySample] {
+        await withCheckedContinuation { continuation in
+            getTodayWaterSamples { samples in
+                continuation.resume(returning: samples)
+            }
+        }
+    }
 
 }

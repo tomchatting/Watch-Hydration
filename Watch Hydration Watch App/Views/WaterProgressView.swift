@@ -32,7 +32,9 @@ struct WaterProgressView: View {
             .environmentObject(progress)
         }
         .onAppear {
-            progress.loadToday()
+            Task {
+                await progress.loadToday()
+            }
         }
     }
 

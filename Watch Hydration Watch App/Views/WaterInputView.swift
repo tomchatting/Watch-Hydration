@@ -21,6 +21,7 @@ struct WaterInputView: View {
     @StateObject private var healthKitStatus = HealthKitAuthStatus()
     @StateObject var animationManager = BubbleConfettiManager()
     @StateObject private var progress = HydrationProgress()
+    @Environment(\.accessibilityReduceMotion) var reduceMotion
 
     struct LiquidData {
         static let all: [LiquidType] = [
@@ -125,30 +126,31 @@ struct WaterInputView: View {
                 }
                 
                 Button("Drink \(selectedLiquid.name)") {
-                    isLogging = true
-                    
-                    // to stop a race condition with what we're doing below
-                    let currentLiquid = selectedLiquid
-                    let valueToLog = liquidAmount * currentLiquid.coefficient
-                    
-                    logStore.log(amount: valueToLog)
-                    
-                    healthKitStatus.requestAuthorization {
-                        if healthKitStatus.isAuthorized {
-                            HealthKitManager.shared.logWater(amountInML: valueToLog)
+                    Task {
+                        isLogging = true
+                        
+                        // to stop a race condition with what we're doing below
+                        let currentLiquid = selectedLiquid
+                        let valueToLog = liquidAmount * currentLiquid.coefficient
+                        
+                        logStore.log(amount: valueToLog)
+                        
+                        healthKitStatus.requestAuthorization {
+                            if healthKitStatus.isAuthorized {
+                                HealthKitManager.shared.logWater(amountInML: valueToLog)
+                            }
+                        }
+                        
+                        animateWaterDecrease()
+
+                        await progress.loadToday()
+
+                        if progress.total >= progress.goal && !reduceMotion {
+                            animationManager.triggerConfetti()
+                        } else if !reduceMotion {
+                            animationManager.triggerBubbles()
                         }
                     }
-                    
-                    animateWaterDecrease()
-                    progress.loadToday()
-                    
-                    if (progress.total >= progress.goal)
-                    {
-                        animationManager.triggerConfetti()
-                    } else {
-                        animationManager.triggerBubbles()
-                    }
-                    
                 }
                 .disabled(liquidAmount == 0 || isLogging)
             }
@@ -172,7 +174,9 @@ struct WaterInputView: View {
             }
         }
         .onAppear {
-            progress.loadToday()
+            Task {
+                await progress.loadToday()
+            }
         }
         .environmentObject(progress)
     }
