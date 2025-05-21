@@ -17,7 +17,7 @@ class WaterLogStore: ObservableObject {
 
     private let calendar = Calendar.current
     private let storageKey = "WaterLogStore.today"
-    private let sharedDefaults = UserDefaults(suiteName: "group.com.thomaschatting.Watch-Hydration") ?? UserDefaults.standard
+    private let sharedDefaults = UserDefaults(suiteName: "group.com.thomaschatting.Watch-Hydration.Shared") ?? UserDefaults.standard
 
     init() {
         load()
@@ -32,21 +32,28 @@ class WaterLogStore: ObservableObject {
         updateTodayLogs()
         updateTotalAmount()
         
-        save()
-        
-        refreshComplications()
+        save { [weak self] in
+            self?.refreshComplications()
+        }
     }
     
-    func save() {
-        if let data = try? JSONEncoder().encode(entries) {
+    func save(completion: @escaping () -> Void) {
+        DispatchQueue.global(qos: .background).async {
+            if let data = try? JSONEncoder().encode(self.entries) {
+                self.sharedDefaults.set(data, forKey: self.storageKey)
+                self.sharedDefaults.set(self.totalAmount, forKey: "hydrationTotal")
+                
+                self.sharedDefaults.synchronize()
 
-            UserDefaults.standard.set(data, forKey: storageKey)
-            sharedDefaults.set(data, forKey: storageKey)
-            
-            sharedDefaults.set(totalAmount, forKey: "hydrationTotal")
+                DispatchQueue.main.async {
+                    completion()
+                }
+            } else {
+                DispatchQueue.main.async {
+                    completion()
+                }
+            }
         }
-        
-        objectWillChange.send()
     }
 
     func totalToday() -> Double {
@@ -92,7 +99,10 @@ class WaterLogStore: ObservableObject {
         updateTotalAmount()
         UserDefaults.standard.set(Date(), forKey: "\(storageKey).date")
         sharedDefaults.set(Date(), forKey: "\(storageKey).date")
-        save()
+        
+        save { [weak self] in
+            self?.refreshComplications()
+        }
     }
     
     func clearTodayEntries() {
@@ -101,7 +111,9 @@ class WaterLogStore: ObservableObject {
         updateTodayLogs()
         updateTotalAmount()
         
-        save()
+        save { [weak self] in
+            self?.refreshComplications()
+        }
         
         print("Cleared all entries for today. Total is now: \(totalToday())")
     }
