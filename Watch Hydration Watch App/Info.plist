@@ -1,16 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
-<dict>
-	<key>ITSAppUsesNonExemptEncryption</key>
-	<false/>
-	<key>NSHealthShareUsageDescription</key>
-	<string>Access to your health data is required to display your water intake for the day.</string>
-	<key>NSHealthUpdateUsageDescription</key>
-	<string>This functionality is required to update your water intake, writing to HealthKit.</string>
-	<key>CLKComplicationPrincipalClass</key>
-	<string>$(PRODUCT_MODULE_NAME).ComplicationController</string>
-	<key>WKWatchOnly</key>
-	<true/>
-</dict>
+<dict/>
 </plist>

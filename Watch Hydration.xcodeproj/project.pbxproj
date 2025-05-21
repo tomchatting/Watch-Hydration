@@ -9,19 +9,12 @@
 /* Begin PBXBuildFile section */
 		A708E2B82DDE5D3100EA2777 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A711C1322DC6712B00A6D309 /* WidgetKit.framework */; };
 		A708E2B92DDE5D3100EA2777 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A711C1342DC6712B00A6D309 /* SwiftUI.framework */; };
-		A708E2C42DDE5D3200EA2777 /* HydrationWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A708E2B72DDE5D3100EA2777 /* HydrationWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		A721124C2DDE769C00603F32 /* HydrationWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A708E2B72DDE5D3100EA2777 /* HydrationWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A721125A2DDE955000603F32 /* HydrationWidgetExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = A708E2B72DDE5D3100EA2777 /* HydrationWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		A77BBE4B2DC5872400D2B633 /* Watch Hydration Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = A77BBE4A2DC5872400D2B633 /* Watch Hydration Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		A708E2C22DDE5D3200EA2777 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = A77BBE3E2DC5872400D2B633 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = A708E2B62DDE5D3100EA2777;
-			remoteInfo = HydrationWidgetExtension;
-		};
 		A721124D2DDE769C00603F32 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = A77BBE3E2DC5872400D2B633 /* Project object */;
@@ -53,17 +46,6 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		A711C1452DC6712C00A6D309 /* Embed Foundation Extensions */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 13;
-			files = (
-				A708E2C42DDE5D3200EA2777 /* HydrationWidgetExtension.appex in Embed Foundation Extensions */,
-			);
-			name = "Embed Foundation Extensions";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		A711C1662DC6774000A6D309 /* Embed Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -83,6 +65,17 @@
 				A721124C2DDE769C00603F32 /* HydrationWidgetExtension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A72112592DDE950600603F32 /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				A721125A2DDE955000603F32 /* HydrationWidgetExtension.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		A77BBE702DC5872500D2B633 /* Embed Watch Content */ = {
@@ -284,13 +277,12 @@
 				A77BBE462DC5872400D2B633 /* Sources */,
 				A77BBE472DC5872400D2B633 /* Frameworks */,
 				A77BBE482DC5872400D2B633 /* Resources */,
-				A711C1452DC6712C00A6D309 /* Embed Foundation Extensions */,
 				A711C1662DC6774000A6D309 /* Embed Frameworks */,
+				A72112592DDE950600603F32 /* Embed App Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				A708E2C32DDE5D3200EA2777 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				A77BBE4E2DC5872400D2B633 /* Watch Hydration Watch App */,
@@ -472,11 +464,6 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		A708E2C32DDE5D3200EA2777 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = A708E2B62DDE5D3100EA2777 /* HydrationWidgetExtension */;
-			targetProxy = A708E2C22DDE5D3200EA2777 /* PBXContainerItemProxy */;
-		};
 		A721124E2DDE769C00603F32 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = A708E2B62DDE5D3100EA2777 /* HydrationWidgetExtension */;
@@ -520,7 +507,7 @@
 					"@executable_path/../../../../Frameworks",
 				);
 				MARKETING_VERSION = 2.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.thomaschatting.Watch-Hydration.watchkitapp.HydrationWidget";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.thomaschatting.Watch-Hydration.watchkitapp.HydrationWidgetExtension";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
@@ -551,7 +538,7 @@
 					"@executable_path/../../../../Frameworks",
 				);
 				MARKETING_VERSION = 2.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.thomaschatting.Watch-Hydration.watchkitapp.HydrationWidget";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.thomaschatting.Watch-Hydration.watchkitapp.HydrationWidgetExtension";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
@@ -692,6 +679,10 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Watch Hydration Watch App/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Watch Hydration";
+				INFOPLIST_KEY_CLKComplicationPrincipalClass = "$(PRODUCT_MODULE_NAME).ComplicationController";
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Access to your health data is required to display your water intake for the day.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "This functionality is required to update your water intake, writing to HealthKit.";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_WKWatchOnly = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -723,6 +714,10 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Watch Hydration Watch App/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Watch Hydration";
+				INFOPLIST_KEY_CLKComplicationPrincipalClass = "$(PRODUCT_MODULE_NAME).ComplicationController";
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Access to your health data is required to display your water intake for the day.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "This functionality is required to update your water intake, writing to HealthKit.";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_WKWatchOnly = YES;
 				LD_RUNPATH_SEARCH_PATHS = (

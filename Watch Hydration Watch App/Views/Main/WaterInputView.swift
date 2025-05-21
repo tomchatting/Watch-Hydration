@@ -158,7 +158,7 @@ struct WaterInputView: View {
                             print("💧 Triggering bubbles")
                             hydrationStore.animationManager.triggerBubbles()
                         }
-    
+
                     }
                 }
                 .disabled(liquidAmount == 0 || isLogging)
