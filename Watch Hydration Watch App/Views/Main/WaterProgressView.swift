@@ -10,9 +10,18 @@ import HealthKit
 
 struct WaterProgressView: View {
     @EnvironmentObject private var hydrationStore: HydrationStore
+    
+    // Add this to force view updates
+    @State private var forceRefresh = UUID()
+    
+    // Cache formatter
+    private let timeFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "h:mm a"
+        return formatter
+    }()
 
     var body: some View {
-        
         let progressRatio = hydrationStore.progress.total / hydrationStore.progress.goal
         let progressTrim = min(progressRatio, 1.0)
 
@@ -24,13 +33,23 @@ struct WaterProgressView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     timelineEntries
                 }
-
             }
             .padding()
+            // This forces the view to refresh when forceRefresh changes
+            .id(forceRefresh)
         }
         .onAppear {
-            Task {
-                await hydrationStore.refreshData()
+            refreshData()
+        }
+    }
+    
+    private func refreshData() {
+        Task {
+            await hydrationStore.refreshData()
+            // Update on main thread
+            await MainActor.run {
+                // Force refresh the view
+                forceRefresh = UUID()
             }
         }
     }
@@ -84,13 +103,5 @@ struct WaterProgressView: View {
                     .padding([.bottom, .trailing], 10)
             }
         }
-    }
-
-    // MARK: - Time Formatter
-
-    private var timeFormatter: DateFormatter {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "h:mm a"
-        return formatter
     }
 }

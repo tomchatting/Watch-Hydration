@@ -7,10 +7,20 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A708E2B82DDE5D3100EA2777 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A711C1322DC6712B00A6D309 /* WidgetKit.framework */; };
+		A708E2B92DDE5D3100EA2777 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A711C1342DC6712B00A6D309 /* SwiftUI.framework */; };
+		A708E2C42DDE5D3200EA2777 /* HydrationWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A708E2B72DDE5D3100EA2777 /* HydrationWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		A77BBE4B2DC5872400D2B633 /* Watch Hydration Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = A77BBE4A2DC5872400D2B633 /* Watch Hydration Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		A708E2C22DDE5D3200EA2777 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A77BBE3E2DC5872400D2B633 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A708E2B62DDE5D3100EA2777;
+			remoteInfo = HydrationWidgetExtension;
+		};
 		A77BBE4C2DC5872400D2B633 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = A77BBE3E2DC5872400D2B633 /* Project object */;
@@ -41,6 +51,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
+				A708E2C42DDE5D3200EA2777 /* HydrationWidgetExtension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -69,6 +80,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		A708E2B72DDE5D3100EA2777 /* HydrationWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = HydrationWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		A711C1322DC6712B00A6D309 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		A711C1342DC6712B00A6D309 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		A77BBE442DC5872400D2B633 /* Watch Hydration.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Watch Hydration.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -79,6 +91,13 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		A708E2C82DDE5D3200EA2777 /* Exceptions for "HydrationWidget" folder in "HydrationWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = A708E2B62DDE5D3100EA2777 /* HydrationWidgetExtension */;
+		};
 		A77BBE952DC5899E00D2B633 /* Exceptions for "Watch Hydration Watch App" folder in "Watch Hydration Watch App" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -89,6 +108,14 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		A708E2BA2DDE5D3100EA2777 /* HydrationWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				A708E2C82DDE5D3200EA2777 /* Exceptions for "HydrationWidget" folder in "HydrationWidgetExtension" target */,
+			);
+			path = HydrationWidget;
+			sourceTree = "<group>";
+		};
 		A711C15C2DC6774000A6D309 /* Watch Hydration SharedTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = "Watch Hydration SharedTests";
@@ -115,6 +142,15 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		A708E2B42DDE5D3100EA2777 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A708E2B92DDE5D3100EA2777 /* SwiftUI.framework in Frameworks */,
+				A708E2B82DDE5D3100EA2777 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A77BBE472DC5872400D2B633 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -156,6 +192,7 @@
 				A77BBE5C2DC5872500D2B633 /* Watch Hydration Watch AppTests */,
 				A77BBE662DC5872500D2B633 /* Watch Hydration Watch AppUITests */,
 				A711C15C2DC6774000A6D309 /* Watch Hydration SharedTests */,
+				A708E2BA2DDE5D3100EA2777 /* HydrationWidget */,
 				A711C1312DC6712B00A6D309 /* Frameworks */,
 				A77BBE452DC5872400D2B633 /* Products */,
 			);
@@ -168,6 +205,7 @@
 				A77BBE4A2DC5872400D2B633 /* Watch Hydration Watch App.app */,
 				A77BBE592DC5872500D2B633 /* Watch Hydration Watch AppTests.xctest */,
 				A77BBE632DC5872500D2B633 /* Watch Hydration Watch AppUITests.xctest */,
+				A708E2B72DDE5D3100EA2777 /* HydrationWidgetExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -175,6 +213,28 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		A708E2B62DDE5D3100EA2777 /* HydrationWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A708E2C52DDE5D3200EA2777 /* Build configuration list for PBXNativeTarget "HydrationWidgetExtension" */;
+			buildPhases = (
+				A708E2B32DDE5D3100EA2777 /* Sources */,
+				A708E2B42DDE5D3100EA2777 /* Frameworks */,
+				A708E2B52DDE5D3100EA2777 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				A708E2BA2DDE5D3100EA2777 /* HydrationWidget */,
+			);
+			name = HydrationWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = HydrationWidgetExtension;
+			productReference = A708E2B72DDE5D3100EA2777 /* HydrationWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		A77BBE432DC5872400D2B633 /* Watch Hydration */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = A77BBE712DC5872500D2B633 /* Build configuration list for PBXNativeTarget "Watch Hydration" */;
@@ -207,6 +267,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				A708E2C32DDE5D3200EA2777 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				A77BBE4E2DC5872400D2B633 /* Watch Hydration Watch App */,
@@ -274,6 +335,9 @@
 				LastSwiftUpdateCheck = 1630;
 				LastUpgradeCheck = 1630;
 				TargetAttributes = {
+					A708E2B62DDE5D3100EA2777 = {
+						CreatedOnToolsVersion = 16.3;
+					};
 					A77BBE432DC5872400D2B633 = {
 						CreatedOnToolsVersion = 16.3;
 					};
@@ -310,11 +374,19 @@
 				A77BBE492DC5872400D2B633 /* Watch Hydration Watch App */,
 				A77BBE582DC5872500D2B633 /* Watch Hydration Watch AppTests */,
 				A77BBE622DC5872500D2B633 /* Watch Hydration Watch AppUITests */,
+				A708E2B62DDE5D3100EA2777 /* HydrationWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		A708E2B52DDE5D3100EA2777 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A77BBE422DC5872400D2B633 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -346,6 +418,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		A708E2B32DDE5D3100EA2777 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A77BBE462DC5872400D2B633 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -370,6 +449,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		A708E2C32DDE5D3200EA2777 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A708E2B62DDE5D3100EA2777 /* HydrationWidgetExtension */;
+			targetProxy = A708E2C22DDE5D3200EA2777 /* PBXContainerItemProxy */;
+		};
 		A77BBE4D2DC5872400D2B633 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = A77BBE492DC5872400D2B633 /* Watch Hydration Watch App */;
@@ -388,6 +472,67 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		A708E2C62DDE5D3200EA2777 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 250505579;
+				DEVELOPMENT_TEAM = 4DXF4PAP5P;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = HydrationWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = HydrationWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MARKETING_VERSION = 2.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.thomaschatting.Watch-Hydration.watchkitapp.HydrationWidget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 11.4;
+			};
+			name = Debug;
+		};
+		A708E2C72DDE5D3200EA2777 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 250505579;
+				DEVELOPMENT_TEAM = 4DXF4PAP5P;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = HydrationWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = HydrationWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MARKETING_VERSION = 2.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.thomaschatting.Watch-Hydration.watchkitapp.HydrationWidget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 11.4;
+			};
+			name = Release;
+		};
 		A77BBE6B2DC5872500D2B633 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -683,6 +828,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		A708E2C52DDE5D3200EA2777 /* Build configuration list for PBXNativeTarget "HydrationWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A708E2C62DDE5D3200EA2777 /* Debug */,
+				A708E2C72DDE5D3200EA2777 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		A77BBE412DC5872400D2B633 /* Build configuration list for PBXProject "Watch Hydration" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

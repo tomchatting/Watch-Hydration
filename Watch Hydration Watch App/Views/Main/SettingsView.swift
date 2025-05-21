@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import ClockKit
 
 struct SettingsView: View {
     @AppStorage("hydrationGoal") private var goal: Double = 2000
@@ -30,6 +31,8 @@ struct SettingsView: View {
                 }
                 .onChange(of: goal) { _, newValue in
                     UserDefaults.standard.set(newValue, forKey: "hydrationGoal")
+                    hydrationStore.progress.goal = newValue
+                    hydrationStore.saveToUserDefaults()
                 }
 
                 Text("Goal: \(Int(goal)) mL")
@@ -69,88 +72,108 @@ struct SettingsView: View {
                         .foregroundColor(.gray)
                 }
                 .sheet(isPresented: $showingDebugMenu) {
-                    VStack(spacing: 20) {
-                        Text("Debug Menu")
-                            .font(.headline)
-                        
-                        VStack(alignment: .leading) {
-                            Text("Current Progress: \(Int(hydrationStore.progress.total))/\(Int(hydrationStore.progress.goal)) ml")
-                                .font(.subheadline)
-                            
-                            Text("Goal percentage: \(Int((hydrationStore.progress.total / max(1, hydrationStore.progress.goal)) * 100))%")
-                                .font(.subheadline)
-                        }
-                        
-                        Button("Delete Today's Progress") {
-                            Task {
-                                hydrationStore.logStore.clearTodayEntries()
-                                HealthKitManager.shared.deleteAllWaterEntriesForToday()
-                                await hydrationStore.progress.loadToday()
-                                showingDebugMenu = false
-                            }
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .tint(.red)
-                        
-                        Button("Set Progress Near Goal (95%)") {
-                            Task {
-                                hydrationStore.logStore.clearTodayEntries()
-                                HealthKitManager.shared.deleteAllWaterEntriesForToday()
-                                
-                                let nearGoalAmount = hydrationStore.progress.goal * 0.95
-                                
-                                hydrationStore.logStore.log(amount: nearGoalAmount)
-                                
-                                if hydrationStore.healthKitStatus.isAuthorized {
-                                    HealthKitManager.shared.logWater(amountInML: nearGoalAmount)
-                                }
-
-                                await hydrationStore.progress.loadToday()
-                                
-                                print("Debug: Progress set to \(hydrationStore.progress.total)/\(hydrationStore.progress.goal) (\(Int((hydrationStore.progress.total/hydrationStore.progress.goal)*100))%)")
-                                showingDebugMenu = false
-                            }
-                        }
-                        .buttonStyle(.borderedProminent)
-                    }
-                    .padding()
+                    SimpleDebugView(hydrationStore: hydrationStore)
                 }
                 #endif
             }
         }
         .onAppear {
+            // Sync the @AppStorage value with the hydrationStore value on appear
+            hydrationStore.progress.goal = goal
             Task {
                 await hydrationStore.refreshData()
             }
         }
     }
+}
+
+struct SimpleDebugView: View {
+    // Using ObservedObject instead of EnvironmentObject for direct reference
+    @ObservedObject var hydrationStore: HydrationStore
+    // Separate state for local updates, not tied to parent view
+    @State private var actionInProgress = false
+    @Environment(\.dismiss) private var dismiss
     
-    // Debug functions
-    func deleteAllTodaysProgress() async {
-        hydrationStore.logStore.clearTodayEntries()
-        
-        if hydrationStore.healthKitStatus.isAuthorized {
-            HealthKitManager.shared.deleteAllWaterEntriesForToday()
+    var body: some View {
+        ScrollView() {
+            Text("Debug Menu")
+                .font(.headline)
+            
+            VStack(alignment: .leading) {
+                Text("Current Progress: \(Int(hydrationStore.progress.total))/\(Int(hydrationStore.progress.goal)) ml")
+                    .font(.subheadline)
+                
+                Text("Goal percentage: \(Int((hydrationStore.progress.total / max(1, hydrationStore.progress.goal)) * 100))%")
+                    .font(.subheadline)
+            }
+            
+            Button("Delete Today's Progress") {
+                guard !actionInProgress else { return }
+                actionInProgress = true
+                
+                Task {
+                    hydrationStore.logStore.clearTodayEntries()
+                    
+                    if hydrationStore.healthKitStatus.isAuthorized {
+                        HealthKitManager.shared.deleteAllWaterEntriesForToday()
+                    }
+                    
+                    await hydrationStore.progress.loadToday()
+                    hydrationStore.saveToUserDefaults()
+                    
+                    actionInProgress = false
+                }
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(.red)
+            .disabled(actionInProgress)
+            
+            Button("Set Progress Near Goal (95%)") {
+                guard !actionInProgress else { return }
+                actionInProgress = true
+                
+                Task {
+                    // Clear first
+                    hydrationStore.logStore.clearTodayEntries()
+                    if hydrationStore.healthKitStatus.isAuthorized {
+                        HealthKitManager.shared.deleteAllWaterEntriesForToday()
+                    }
+                    
+                    // Then add near-goal amount
+                    let nearGoalAmount = hydrationStore.progress.goal * 0.95
+                    hydrationStore.logStore.log(amount: nearGoalAmount)
+                    
+                    if hydrationStore.healthKitStatus.isAuthorized {
+                        HealthKitManager.shared.logWater(amountInML: nearGoalAmount)
+                    }
+                    
+                    await hydrationStore.progress.loadToday()
+                    hydrationStore.saveToUserDefaults()
+                    
+                    actionInProgress = false
+                }
+            }
+            .buttonStyle(.borderedProminent)
+            .disabled(actionInProgress)
+            
+            Button("Debug Refresh Complications") {
+                refreshComplications()
+            }
         }
-        
-        await hydrationStore.progress.loadToday()
-        
-        print("Debug: All today's progress deleted. Current total: \(hydrationStore.progress.total)")
     }
-    
-    func setProgressNearGoal() async {
-        await deleteAllTodaysProgress()
-        
-        let nearGoalAmount = hydrationStore.progress.goal * 0.95
-        
-        hydrationStore.logStore.log(amount: nearGoalAmount)
-        
-        if hydrationStore.healthKitStatus.isAuthorized {
-            HealthKitManager.shared.logWater(amountInML: nearGoalAmount)
-        }
-        
-        await hydrationStore.progress.loadToday()
-        
-        print("Debug: Progress set to \(hydrationStore.progress.total)/\(hydrationStore.progress.goal) (\(Int((hydrationStore.progress.total/hydrationStore.progress.goal)*100))%)")
+}
+
+func refreshComplications() {
+    let server = CLKComplicationServer.sharedInstance()
+
+    guard let complications = server.activeComplications, !complications.isEmpty else {
+        print("⚠️ No active complications found.")
+        return
+    }
+
+    for complication in complications {
+        server.reloadTimeline(for: complication)
+        server.extendTimeline(for: complication)
+        print("🔄 Reloaded and extended timeline for \(complication.family)")
     }
 }

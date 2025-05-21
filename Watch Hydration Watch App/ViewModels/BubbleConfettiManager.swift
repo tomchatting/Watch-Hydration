@@ -13,11 +13,11 @@ class BubbleConfettiManager: ObservableObject {
 	@Published var bubbles: [UUID] = []
 	@Published var showConfetti = false
 
-	func triggerBubbles(count: Int = 6) {
+	func triggerBubbles(count: Int = 12) {
 		for _ in 0..<count {
 			bubbles.append(UUID())
 		}
-		// Auto-clear after animation
+
 		DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
 			self.bubbles.removeAll()
 		}

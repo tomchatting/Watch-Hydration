@@ -25,6 +25,17 @@ class ExtensionDelegate: NSObject, WKExtensionDelegate {
                 print("HealthKit failed: \(error?.localizedDescription ?? "Unknown")")
             }
         }
+        
+        // Register for complication updates
+        let complicationServer = CLKComplicationServer.sharedInstance()
+        if let complications = complicationServer.activeComplications {
+            for complication in complications {
+                complicationServer.reloadTimeline(for: complication)
+            }
+        }
+        
+        // Schedule background refresh
+        scheduleBackgroundRefresh()
     }
     
     private func requestHealthKitAuthorization() {
@@ -47,6 +58,44 @@ class ExtensionDelegate: NSObject, WKExtensionDelegate {
                 print("HealthKit authorization granted.")
             } else {
                 print("HealthKit authorization denied.")
+            }
+        }
+    }
+    
+    func scheduleBackgroundRefresh() {
+        // Schedule background refresh every hour
+        let refreshInterval: TimeInterval = 60 * 5 // 5 minutes
+        WKExtension.shared().scheduleBackgroundRefresh(
+            withPreferredDate: Date(timeIntervalSinceNow: refreshInterval),
+            userInfo: nil
+        ) { (error) in
+            if let error = error {
+                print("Background refresh scheduling error: \(error.localizedDescription)")
+            }
+        }
+    }
+    
+    func handle(_ backgroundTasks: Set<WKRefreshBackgroundTask>) {
+        for task in backgroundTasks {
+            switch task {
+            case let backgroundTask as WKApplicationRefreshBackgroundTask:
+                // Update complications
+                let complicationServer = CLKComplicationServer.sharedInstance()
+                if let complications = complicationServer.activeComplications {
+                    for complication in complications {
+                        complicationServer.reloadTimeline(for: complication)
+                    }
+                }
+                
+                // Schedule next refresh
+                scheduleBackgroundRefresh()
+                
+                // Mark task complete
+                backgroundTask.setTaskCompletedWithSnapshot(false)
+                
+            default:
+                // Make sure to complete unhandled task types
+                task.setTaskCompletedWithSnapshot(false)
             }
         }
     }

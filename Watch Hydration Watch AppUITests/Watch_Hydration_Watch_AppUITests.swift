@@ -8,6 +8,15 @@
 import XCTest
 
 final class Watch_Hydration_Watch_AppUITests: XCTestCase {
+    
+    private var app: XCUIApplication!
+
+    override func setUp() {
+        super.setUp()
+        continueAfterFailure = false
+        app = XCUIApplication()
+        app.launch()
+    }
 
     override func setUpWithError() throws {
         // Put setup code here. This method is called before the invocation of each test method in the class.
@@ -24,15 +33,12 @@ final class Watch_Hydration_Watch_AppUITests: XCTestCase {
 
     @MainActor
     func testExample() throws {
-        // UI tests must launch the application that they test.
-        let app = XCUIApplication()
         app.launch()
 
         // Use XCTAssert and related functions to verify your tests produce the correct results.
     }
     
     func testInitialState() throws {
-        let app = XCUIApplication()
         app.launch()
 
         let drinkButton = app.buttons["DrinkButton"]
@@ -44,7 +50,6 @@ final class Watch_Hydration_Watch_AppUITests: XCTestCase {
     }
 
     func testIncrementDecrementButtons() throws {
-        let app = XCUIApplication()
         app.launch()
 
         let increment = app.buttons["IncrementButton"]
@@ -64,7 +69,6 @@ final class Watch_Hydration_Watch_AppUITests: XCTestCase {
     }
 
     func testChooseLiquid() throws {
-        let app = XCUIApplication()
         app.launch()
 
         let cupTapArea = app.otherElements["CupTapArea"]
@@ -82,7 +86,6 @@ final class Watch_Hydration_Watch_AppUITests: XCTestCase {
     }
 
     func testDrinkButtonDisabledWhenAmountZero() throws {
-        let app = XCUIApplication()
         app.launch()
 
         let drinkButton = app.buttons["DrinkButton"]

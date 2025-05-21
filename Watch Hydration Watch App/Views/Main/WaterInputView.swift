@@ -139,7 +139,6 @@ struct WaterInputView: View {
                         
                         let goalReached = totalWithCurrentDrink >= hydrationStore.progress.goal
                         
-                        // Debug for verification
                         print("Progress: \(hydrationStore.progress.total) + \(valueToLog) = \(totalWithCurrentDrink)/\(hydrationStore.progress.goal)")
                         print("Goal reached: \(goalReached), Reduce Motion: \(reduceMotion)")
                         
@@ -174,7 +173,7 @@ struct WaterInputView: View {
             
             // Bubbles
             ForEach(hydrationStore.animationManager.bubbles, id: \.self) { id in
-                BubbleView(id: id)
+                BubbleView(id: id, color: selectedLiquid.color)
             }
 
             // Confetti

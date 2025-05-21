@@ -7,35 +7,57 @@
 
 import Foundation
 import SwiftUI
+import Combine
 
 class WaterLogStore: ObservableObject {
     @Published var todayLogs: [Int: Double] = [:] // [hour: total ml]
     @Published var entries: [WaterLogEntry] = []
+    @Published var totalAmount: Double = 0  // Add this to track total directly
 
     private let calendar = Calendar.current
     private let storageKey = "WaterLogStore.today"
+    private let sharedDefaults = UserDefaults(suiteName: "group.com.thomaschatting.Watch-Hydration") ?? UserDefaults.standard
 
     init() {
         load()
         updateTodayLogs() // Sync todayLogs with entries on initialization
+        updateTotalAmount() // Calculate initial total
     }
 
     func log(amount: Double, date: Date = Date()) {
         let entry = WaterLogEntry(date: date, amount: amount)
         entries.insert(entry, at: 0)
-        updateTodayLogs() // Update todayLogs when adding a new entry
+        
+        // Update both derived values
+        updateTodayLogs()
+        updateTotalAmount()
+        
+        // Save to both standard and shared UserDefaults
         save()
     }
     
     func save() {
         if let data = try? JSONEncoder().encode(entries) {
+            // Save to both standard and shared UserDefaults
             UserDefaults.standard.set(data, forKey: storageKey)
+            sharedDefaults.set(data, forKey: storageKey)
+            
+            // Also save the total amount for widgets and complications
+            sharedDefaults.set(totalAmount, forKey: "hydrationTotal")
         }
+        
+        // Explicitly announce changes
+        objectWillChange.send()
     }
 
     func totalToday() -> Double {
+        return totalAmount
+    }
+    
+    // Update the total amount value
+    private func updateTotalAmount() {
         let todayEntries = entries.filter { calendar.isDateInToday($0.date) }
-        return todayEntries.reduce(0) { $0 + $1.amount }
+        totalAmount = todayEntries.reduce(0) { $0 + $1.amount }
     }
     
     // Update todayLogs based on entries for today
@@ -48,9 +70,16 @@ class WaterLogStore: ObservableObject {
     }
 
     private func load() {
-        if let data = UserDefaults.standard.data(forKey: storageKey),
-           let savedEntries = try? JSONDecoder().decode([WaterLogEntry].self, from: data) {
+        // Try to load from shared UserDefaults first, then fall back to standard
+        var data = sharedDefaults.data(forKey: storageKey)
+        if data == nil {
+            data = UserDefaults.standard.data(forKey: storageKey)
+        }
+        
+        if let loadedData = data,
+           let savedEntries = try? JSONDecoder().decode([WaterLogEntry].self, from: loadedData) {
             self.entries = savedEntries
+            updateTotalAmount()
         }
     }
     
@@ -65,7 +94,9 @@ class WaterLogStore: ObservableObject {
     func resetForNewDay() {
         // We don't want to clear all entries, just update todayLogs
         updateTodayLogs()
+        updateTotalAmount()
         UserDefaults.standard.set(Date(), forKey: "\(storageKey).date")
+        sharedDefaults.set(Date(), forKey: "\(storageKey).date")
         save()
     }
     
@@ -74,8 +105,9 @@ class WaterLogStore: ObservableObject {
         // Remove all entries that are from today
         entries.removeAll { calendar.isDateInToday($0.date) }
         
-        // Update todayLogs
-        todayLogs = [:]
+        // Update derived values
+        updateTodayLogs()
+        updateTotalAmount()
         
         // Save changes
         save()
