@@ -11,6 +11,8 @@ import SwiftUI
 
 class ComplicationController: NSObject, CLKComplicationDataSource {
     
+    private let sharedDefaults = UserDefaults(suiteName: "group.com.thomaschatting.Watch-Hydration.Shared") ?? UserDefaults.standard
+    
     // MARK: - Complication Configuration
     
     func getComplicationDescriptors(handler: @escaping ([CLKComplicationDescriptor]) -> Void) {
@@ -37,23 +39,21 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
     // MARK: - Timeline Configuration
     
     func getTimelineEndDate(for complication: CLKComplication, withHandler handler: @escaping (Date?) -> Void) {
-        // Return the last valid date for this complication - typically end of day
         let endOfDay = Calendar.current.date(bySettingHour: 23, minute: 59, second: 59, of: Date())
         handler(endOfDay)
     }
     
     func getPrivacyBehavior(for complication: CLKComplication, withHandler handler: @escaping (CLKComplicationPrivacyBehavior) -> Void) {
-        // Show data even when in privacy mode
         handler(.showOnLockScreen)
     }
     
     // MARK: - Timeline Population
     
     func getCurrentTimelineEntry(for complication: CLKComplication, withHandler handler: @escaping (CLKComplicationTimelineEntry?) -> Void) {
-        // Get hydration data directly from UserDefaults
-        let defaults = UserDefaults.standard
-        let total = defaults.double(forKey: "hydrationTotal")
-        let goal = defaults.double(forKey: "hydrationGoal") > 0 ? defaults.double(forKey: "hydrationGoal") : 2000
+        let total = sharedDefaults.double(forKey: "hydrationTotal")
+        let goal = sharedDefaults.double(forKey: "hydrationGoal") > 0 ? sharedDefaults.double(forKey: "hydrationGoal") : 2000
+        
+        print("Complication reading values - Total: \(total), Goal: \(goal)")
         
         // Create the complication template based on family
         var template: CLKComplicationTemplate?
@@ -95,7 +95,6 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
                 text: "\(Int(progressPercent * 100))%"
             )
             
-            // Use empty text provider instead of nil
             let emptyTextProvider = CLKSimpleTextProvider(text: "")
             
             template = CLKComplicationTemplateGraphicCornerGaugeText(
@@ -131,7 +130,6 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
             break
         }
         
-        // If we have a valid template, create a timeline entry
         if let validTemplate = template {
             let entry = CLKComplicationTimelineEntry(
                 date: Date(),
@@ -146,10 +144,8 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
     // MARK: - Sample Templates
     
     func getLocalizableSampleTemplate(for complication: CLKComplication, withHandler handler: @escaping (CLKComplicationTemplate?) -> Void) {
-        // Create a sample template to show in the gallery
         var template: CLKComplicationTemplate?
         
-        // Sample shows 75% progress
         let progressPercent: Float = 0.75
         
         switch complication.family {

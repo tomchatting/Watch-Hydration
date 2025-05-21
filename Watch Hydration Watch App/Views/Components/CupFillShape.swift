@@ -20,7 +20,6 @@ struct CupFillShape: Shape {
         let baseY = height
         let topY = baseY - fillHeight
 
-        // interpolate x-position at top based on flare
         let progress = fillHeight / height
         let topInset = flare * (1 - progress)
 

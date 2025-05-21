@@ -88,92 +88,117 @@ struct SettingsView: View {
 }
 
 struct SimpleDebugView: View {
-    // Using ObservedObject instead of EnvironmentObject for direct reference
     @ObservedObject var hydrationStore: HydrationStore
-    // Separate state for local updates, not tied to parent view
     @State private var actionInProgress = false
+    @State private var complicationMessage: String = ""
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        ScrollView() {
-            Text("Debug Menu")
-                .font(.headline)
-            
-            VStack(alignment: .leading) {
-                Text("Current Progress: \(Int(hydrationStore.progress.total))/\(Int(hydrationStore.progress.goal)) ml")
-                    .font(.subheadline)
+        ScrollView {
+            VStack(spacing: 15) {
+                Text("Debug Menu")
+                    .font(.headline)
+                    .padding(.top)
                 
-                Text("Goal percentage: \(Int((hydrationStore.progress.total / max(1, hydrationStore.progress.goal)) * 100))%")
-                    .font(.subheadline)
-            }
-            
-            Button("Delete Today's Progress") {
-                guard !actionInProgress else { return }
-                actionInProgress = true
-                
-                Task {
-                    hydrationStore.logStore.clearTodayEntries()
+                VStack(alignment: .leading) {
+                    Text("Current Progress: \(Int(hydrationStore.progress.total))/\(Int(hydrationStore.progress.goal)) ml")
+                        .font(.subheadline)
                     
-                    if hydrationStore.healthKitStatus.isAuthorized {
-                        HealthKitManager.shared.deleteAllWaterEntriesForToday()
-                    }
-                    
-                    await hydrationStore.progress.loadToday()
-                    hydrationStore.saveToUserDefaults()
-                    
-                    actionInProgress = false
+                    Text("Goal percentage: \(Int((hydrationStore.progress.total / max(1, hydrationStore.progress.goal)) * 100))%")
+                        .font(.subheadline)
                 }
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(.red)
-            .disabled(actionInProgress)
-            
-            Button("Set Progress Near Goal (95%)") {
-                guard !actionInProgress else { return }
-                actionInProgress = true
+                .padding(.horizontal)
                 
-                Task {
-                    // Clear first
-                    hydrationStore.logStore.clearTodayEntries()
-                    if hydrationStore.healthKitStatus.isAuthorized {
-                        HealthKitManager.shared.deleteAllWaterEntriesForToday()
+                Button("Delete Today's Progress") {
+                    guard !actionInProgress else { return }
+                    actionInProgress = true
+                    
+                    Task {
+                        hydrationStore.logStore.clearTodayEntries()
+                        
+                        if hydrationStore.healthKitStatus.isAuthorized {
+                            HealthKitManager.shared.deleteAllWaterEntriesForToday()
+                        }
+                        
+                        await hydrationStore.progress.loadToday()
+                        hydrationStore.saveToUserDefaults()
+                        
+                        actionInProgress = false
                     }
-                    
-                    // Then add near-goal amount
-                    let nearGoalAmount = hydrationStore.progress.goal * 0.95
-                    hydrationStore.logStore.log(amount: nearGoalAmount)
-                    
-                    if hydrationStore.healthKitStatus.isAuthorized {
-                        HealthKitManager.shared.logWater(amountInML: nearGoalAmount)
-                    }
-                    
-                    await hydrationStore.progress.loadToday()
-                    hydrationStore.saveToUserDefaults()
-                    
-                    actionInProgress = false
                 }
+                .buttonStyle(.borderedProminent)
+                .tint(.red)
+                .disabled(actionInProgress)
+                
+                Button("Set Progress Near Goal (95%)") {
+                    guard !actionInProgress else { return }
+                    actionInProgress = true
+                    
+                    Task {
+                        // Clear first
+                        hydrationStore.logStore.clearTodayEntries()
+                        if hydrationStore.healthKitStatus.isAuthorized {
+                            HealthKitManager.shared.deleteAllWaterEntriesForToday()
+                        }
+                        
+                        // Then add near-goal amount
+                        let nearGoalAmount = hydrationStore.progress.goal * 0.95
+                        hydrationStore.logStore.log(amount: nearGoalAmount)
+                        
+                        if hydrationStore.healthKitStatus.isAuthorized {
+                            HealthKitManager.shared.logWater(amountInML: nearGoalAmount)
+                        }
+                        
+                        await hydrationStore.progress.loadToday()
+                        hydrationStore.saveToUserDefaults()
+                        
+                        actionInProgress = false
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(actionInProgress)
+                
+                Button("Refresh Complications") {
+                    let result = refreshComplications()
+                    complicationMessage = result
+                }
+                .buttonStyle(.bordered)
+                
+                if !complicationMessage.isEmpty {
+                    Text(complicationMessage)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                }
+                
+                if actionInProgress {
+                    ProgressView()
+                        .padding(.top, 5)
+                }
+                
+                Button("Close") {
+                    dismiss()
+                }
+                .buttonStyle(.bordered)
+                .padding(.top)
             }
-            .buttonStyle(.borderedProminent)
-            .disabled(actionInProgress)
-            
-            Button("Debug Refresh Complications") {
-                refreshComplications()
-            }
+            .padding()
         }
     }
-}
+    
+    func refreshComplications() -> String {
+        let server = CLKComplicationServer.sharedInstance()
 
-func refreshComplications() {
-    let server = CLKComplicationServer.sharedInstance()
+        guard let complications = server.activeComplications, !complications.isEmpty else {
+            return "⚠️ No active complications found."
+        }
 
-    guard let complications = server.activeComplications, !complications.isEmpty else {
-        print("⚠️ No active complications found.")
-        return
-    }
-
-    for complication in complications {
-        server.reloadTimeline(for: complication)
-        server.extendTimeline(for: complication)
-        print("🔄 Reloaded and extended timeline for \(complication.family)")
+        for complication in complications {
+            server.reloadTimeline(for: complication)
+            server.extendTimeline(for: complication)
+        }
+        
+        return "🔄 Reloaded \(complications.count) complications"
     }
 }

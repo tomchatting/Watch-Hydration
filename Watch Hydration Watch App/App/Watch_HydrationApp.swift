@@ -16,9 +16,7 @@ struct Watch_HydrationApp: App {
             ContentView()
                 .environmentObject(hydrationStore)
                 .onOpenURL { url in
-                    // Handle URL scheme from widget
                     if url.scheme == "watchhydration" {
-                        // Navigate to the appropriate view if needed
                         print("App opened from widget or complication")
                     }
                 }

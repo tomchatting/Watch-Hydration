@@ -63,8 +63,8 @@ class ExtensionDelegate: NSObject, WKExtensionDelegate {
     }
     
     func scheduleBackgroundRefresh() {
-        // Schedule background refresh every hour
-        let refreshInterval: TimeInterval = 60 * 5 // 5 minutes
+        let refreshInterval: TimeInterval = 60 * 60
+        
         WKExtension.shared().scheduleBackgroundRefresh(
             withPreferredDate: Date(timeIntervalSinceNow: refreshInterval),
             userInfo: nil
@@ -79,7 +79,7 @@ class ExtensionDelegate: NSObject, WKExtensionDelegate {
         for task in backgroundTasks {
             switch task {
             case let backgroundTask as WKApplicationRefreshBackgroundTask:
-                // Update complications
+                
                 let complicationServer = CLKComplicationServer.sharedInstance()
                 if let complications = complicationServer.activeComplications {
                     for complication in complications {
@@ -87,14 +87,11 @@ class ExtensionDelegate: NSObject, WKExtensionDelegate {
                     }
                 }
                 
-                // Schedule next refresh
                 scheduleBackgroundRefresh()
                 
-                // Mark task complete
                 backgroundTask.setTaskCompletedWithSnapshot(false)
                 
             default:
-                // Make sure to complete unhandled task types
                 task.setTaskCompletedWithSnapshot(false)
             }
         }

@@ -10,13 +10,7 @@
 	<string>This functionality is required to update your water intake, writing to HealthKit.</string>
 	<key>CLKComplicationPrincipalClass</key>
 	<string>$(PRODUCT_MODULE_NAME).ComplicationController</string>
-	<key>WKExtensionDelegateClassName</key>
-	<string>$(PRODUCT_MODULE_NAME).ExtensionDelegate</string>
 	<key>WKWatchOnly</key>
 	<true/>
-	<key>WKBackgroundModes</key>
-	<array>
-		<string>complication</string>
-	</array>
 </dict>
 </plist>

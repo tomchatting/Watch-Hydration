@@ -25,6 +25,9 @@ struct HydrationEntry: TimelineEntry {
 
 // Provider class responsible for generating timeline entries
 struct HydrationProvider: TimelineProvider {
+    // Use shared container for UserDefaults
+    private let sharedDefaults = UserDefaults(suiteName: "group.com.thomaschatting.Watch-Hydration.Shared") ?? UserDefaults.standard
+    
     // Provides a placeholder entry for when the widget is first displayed
     func placeholder(in context: Context) -> HydrationEntry {
         // Sample data for placeholder
@@ -50,10 +53,12 @@ struct HydrationProvider: TimelineProvider {
     
     // Provides the actual timeline of entries
     func getTimeline(in context: Context, completion: @escaping (Timeline<HydrationEntry>) -> Void) {
-        // Load data from UserDefaults
-        let defaults = UserDefaults.standard
-        let currentAmount = defaults.double(forKey: "hydrationTotal")
-        let goalAmount = defaults.double(forKey: "hydrationGoal")
+        // Load data from shared UserDefaults
+        let currentAmount = sharedDefaults.double(forKey: "hydrationTotal")
+        let goalAmount = sharedDefaults.double(forKey: "hydrationGoal")
+        
+        // Log values for debugging
+        print("Widget reading from shared defaults - Total: \(currentAmount), Goal: \(goalAmount)")
         
         // Calculate progress percentage
         let actualGoal = goalAmount > 0 ? goalAmount : 2000 // Default to 2000ml if no goal set

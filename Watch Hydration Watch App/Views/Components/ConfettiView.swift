@@ -35,8 +35,8 @@ struct ConfettiPiece: View {
             .onAppear {
                 DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
                     withAnimation(.interpolatingSpring(stiffness: 30, damping: 6)) {
-                        yOffset = -100 // throw higher
-                        xOffset = .random(in: -60...60) // spread wider
+                        yOffset = -100
+                        xOffset = .random(in: -60...60)
                         rotation = .random(in: -90...90)
                     }
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {

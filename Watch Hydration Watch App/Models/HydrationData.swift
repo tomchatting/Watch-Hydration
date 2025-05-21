@@ -10,8 +10,8 @@ import Foundation
 class HydrationData {
     static let shared = HydrationData()
 
-    var consumed: Double = 0.0      // Amount of water consumed (in milliliters)
-    var goal: Double = 2000.0       // Hydration goal (in milliliters, can be user-configurable)
+    var consumed: Double = 0.0
+    var goal: Double = 2000.0
 
-    private init() { }  // Prevent initialization from outside (singleton pattern)
+    private init() { }
 }

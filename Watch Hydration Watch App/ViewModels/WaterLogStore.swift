@@ -8,11 +8,12 @@
 import Foundation
 import SwiftUI
 import Combine
+import ClockKit
 
 class WaterLogStore: ObservableObject {
-    @Published var todayLogs: [Int: Double] = [:] // [hour: total ml]
+    @Published var todayLogs: [Int: Double] = [:]
     @Published var entries: [WaterLogEntry] = []
-    @Published var totalAmount: Double = 0  // Add this to track total directly
+    @Published var totalAmount: Double = 0
 
     private let calendar = Calendar.current
     private let storageKey = "WaterLogStore.today"
@@ -20,33 +21,31 @@ class WaterLogStore: ObservableObject {
 
     init() {
         load()
-        updateTodayLogs() // Sync todayLogs with entries on initialization
-        updateTotalAmount() // Calculate initial total
+        updateTodayLogs()
+        updateTotalAmount()
     }
 
     func log(amount: Double, date: Date = Date()) {
         let entry = WaterLogEntry(date: date, amount: amount)
         entries.insert(entry, at: 0)
         
-        // Update both derived values
         updateTodayLogs()
         updateTotalAmount()
         
-        // Save to both standard and shared UserDefaults
         save()
+        
+        refreshComplications()
     }
     
     func save() {
         if let data = try? JSONEncoder().encode(entries) {
-            // Save to both standard and shared UserDefaults
+
             UserDefaults.standard.set(data, forKey: storageKey)
             sharedDefaults.set(data, forKey: storageKey)
             
-            // Also save the total amount for widgets and complications
             sharedDefaults.set(totalAmount, forKey: "hydrationTotal")
         }
         
-        // Explicitly announce changes
         objectWillChange.send()
     }
 
@@ -54,13 +53,11 @@ class WaterLogStore: ObservableObject {
         return totalAmount
     }
     
-    // Update the total amount value
     private func updateTotalAmount() {
         let todayEntries = entries.filter { calendar.isDateInToday($0.date) }
         totalAmount = todayEntries.reduce(0) { $0 + $1.amount }
     }
     
-    // Update todayLogs based on entries for today
     private func updateTodayLogs() {
         todayLogs = [:]
         for entry in entries where calendar.isDateInToday(entry.date) {
@@ -70,7 +67,6 @@ class WaterLogStore: ObservableObject {
     }
 
     private func load() {
-        // Try to load from shared UserDefaults first, then fall back to standard
         var data = sharedDefaults.data(forKey: storageKey)
         if data == nil {
             data = UserDefaults.standard.data(forKey: storageKey)
@@ -92,7 +88,6 @@ class WaterLogStore: ObservableObject {
     }
 
     func resetForNewDay() {
-        // We don't want to clear all entries, just update todayLogs
         updateTodayLogs()
         updateTotalAmount()
         UserDefaults.standard.set(Date(), forKey: "\(storageKey).date")
@@ -100,27 +95,36 @@ class WaterLogStore: ObservableObject {
         save()
     }
     
-    // New method to clear today's entries
     func clearTodayEntries() {
-        // Remove all entries that are from today
         entries.removeAll { calendar.isDateInToday($0.date) }
         
-        // Update derived values
         updateTodayLogs()
         updateTotalAmount()
         
-        // Save changes
         save()
         
         print("Cleared all entries for today. Total is now: \(totalToday())")
     }
     
-    // Optional: Method to get entries from today only
+    private func refreshComplications() {
+        #if os(watchOS)
+        let server = CLKComplicationServer.sharedInstance()
+        if let complications = server.activeComplications {
+            for complication in complications {
+                server.reloadTimeline(for: complication)
+            }
+            
+            if !complications.isEmpty {
+                print("Refreshed \(complications.count) complications after logging water")
+            }
+        }
+        #endif
+    }
+    
     func entriesForToday() -> [WaterLogEntry] {
         return entries.filter { calendar.isDateInToday($0.date) }
     }
     
-    // Optional: Method to get the total for a specific date
     func totalFor(date: Date) -> Double {
         let dateEntries = entries.filter { calendar.isDate($0.date, inSameDayAs: date) }
         return dateEntries.reduce(0) { $0 + $1.amount }
