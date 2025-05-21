@@ -1,10 +1,3 @@
-//
-//  ContentView.swift
-//  WaterBoy Watch App
-//
-//  Created by Thomas Chatting on 02/05/2025.
-//
-
 import SwiftUI
 import Combine
 
@@ -129,11 +122,20 @@ struct WaterInputView: View {
                     Task {
                         isLogging = true
                         
-                        // to stop a race condition with what we're doing below
                         let currentLiquid = selectedLiquid
                         let valueToLog = liquidAmount * currentLiquid.coefficient
                         
                         logStore.log(amount: valueToLog)
+                        
+                        await progress.loadToday()
+                        
+                        let totalWithCurrentDrink = progress.total + valueToLog
+                        
+                        let goalReached = totalWithCurrentDrink >= progress.goal
+                        
+                        // Debug for verification
+                        print("Progress: \(progress.total) + \(valueToLog) = \(totalWithCurrentDrink)/\(progress.goal)")
+                        print("Goal reached: \(goalReached), Reduce Motion: \(reduceMotion)")
                         
                         healthKitStatus.requestAuthorization {
                             if healthKitStatus.isAuthorized {
@@ -142,12 +144,12 @@ struct WaterInputView: View {
                         }
                         
                         animateWaterDecrease()
-
-                        await progress.loadToday()
-
-                        if progress.total >= progress.goal && !reduceMotion {
+                        
+                        if goalReached && !reduceMotion {
+                            print("🎉 Triggering confetti!")
                             animationManager.triggerConfetti()
                         } else if !reduceMotion {
+                            print("💧 Triggering bubbles")
                             animationManager.triggerBubbles()
                         }
                     }
@@ -182,19 +184,19 @@ struct WaterInputView: View {
     }
     
     func animateWaterDecrease() {
-            let decrementValue = 1.0
+        let decrementValue = 1.0
 
-            Timer.scheduledTimer(withTimeInterval: 0.001, repeats: true) { timer in
-                if liquidAmount > 0 {
-                    withAnimation(.linear(duration: 0.001)) {
-                        liquidAmount = max(0, liquidAmount - decrementValue)
-                    }
-                } else {
-                    timer.invalidate() // Stop the timer when liquidAmount reaches 0
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.001) {
-                        isLogging = false
-                    }
+        Timer.scheduledTimer(withTimeInterval: 0.001, repeats: true) { timer in
+            if liquidAmount > 0 {
+                withAnimation(.linear(duration: 0.001)) {
+                    liquidAmount = max(0, liquidAmount - decrementValue)
+                }
+            } else {
+                timer.invalidate()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.001) {
+                    isLogging = false
                 }
             }
         }
+    }
 }

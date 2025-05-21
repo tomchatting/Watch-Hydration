@@ -72,5 +72,24 @@ class HealthKitManager {
             }
         }
     }
+    
+    func deleteAllWaterEntriesForToday() {
+        getTodayWaterSamples { samples in
+            guard !samples.isEmpty else {
+                print("No water samples found for today")
+                return
+            }
+            
+            print("Deleting \(samples.count) water samples from HealthKit")
+            
+            self.healthStore.delete(samples) { success, error in
+                if let error = error {
+                    print("Error deleting water samples: \(error.localizedDescription)")
+                } else if success {
+                    print("Successfully deleted \(samples.count) water samples from HealthKit")
+                }
+            }
+        }
+    }
 
 }
