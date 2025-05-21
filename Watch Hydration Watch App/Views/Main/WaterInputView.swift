@@ -7,6 +7,7 @@
 
 import SwiftUI
 import Combine
+import WidgetKit
 
 struct WaterInputView: View {
     @State private var liquidAmount: Double = 0
@@ -157,6 +158,7 @@ struct WaterInputView: View {
                             print("💧 Triggering bubbles")
                             hydrationStore.animationManager.triggerBubbles()
                         }
+    
                     }
                 }
                 .disabled(liquidAmount == 0 || isLogging)

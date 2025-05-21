@@ -1,188 +1,250 @@
-// HydrationWidget.swift
+//
+//  HydrationWidget.swift
+//  Watch Hydration WidgetExtension
+//
+//  Created by Thomas Chatting on 21/05/2025.
+//
+
 import WidgetKit
 import SwiftUI
 
-// Main widget configuration
-@main
+// MARK: - Provider
+
+struct Provider: TimelineProvider {
+    let sharedDefaults = UserDefaults(suiteName: "group.com.thomaschatting.Watch-Hydration.Shared") ?? UserDefaults.standard
+    
+    func placeholder(in context: Context) -> HydrationEntry {
+        HydrationEntry(date: Date(), total: 1500, goal: 2000)
+    }
+    
+    func getSnapshot(in context: Context, completion: @escaping (HydrationEntry) -> Void) {
+        let total = sharedDefaults.double(forKey: "hydrationTotal")
+        let goal = sharedDefaults.double(forKey: "hydrationGoal") > 0 ? sharedDefaults.double(forKey: "hydrationGoal") : 2000
+        
+        let entry = HydrationEntry(date: Date(), total: total, goal: goal)
+        completion(entry)
+    }
+    
+    func getTimeline(in context: Context, completion: @escaping (Timeline<HydrationEntry>) -> Void) {
+        let total = sharedDefaults.double(forKey: "hydrationTotal")
+        let goal = sharedDefaults.double(forKey: "hydrationGoal") > 0 ? sharedDefaults.double(forKey: "hydrationGoal") : 2000
+        
+        let currentDate = Date()
+        let entry = HydrationEntry(date: currentDate, total: total, goal: goal)
+        
+        // Create a timeline that refreshes at the end of the day
+        let endOfDay = Calendar.current.date(bySettingHour: 23, minute: 59, second: 59, of: currentDate) ?? currentDate.addingTimeInterval(86400)
+        
+        let timeline = Timeline(entries: [entry], policy: .after(endOfDay))
+        completion(timeline)
+    }
+}
+
+// MARK: - Entry
+
+struct HydrationEntry: TimelineEntry {
+    let date: Date
+    let total: Double
+    let goal: Double
+    
+    var progressPercent: Float {
+        return Float(min(total / goal, 1.0))
+    }
+    
+    var progressPercentInt: Int {
+        return Int(progressPercent * 100)
+    }
+}
+
+// MARK: - CircularSmallView
+
+struct CircularPremiumView: View {
+    var entry: HydrationEntry
+    
+    // SF Symbols configuration
+    var dropSymbol: some View {
+        Image(systemName: "drop.fill")
+            .font(.system(size: 11, weight: .semibold))
+            .symbolRenderingMode(.palette)
+            .foregroundStyle(.white, .blue)
+    }
+    
+    var body: some View {
+        ZStack {
+            // Background gauge with dynamic blur effect
+            Gauge(value: Double(entry.progressPercent)) {
+                EmptyView()
+            }
+            .gaugeStyle(.accessoryCircularCapacity)
+            .tint(.blue)
+            
+            // Content layer
+            VStack(spacing: 1) {
+                // Water drop icon at top
+                dropSymbol
+                
+                // Bold percentage
+                Text("\(entry.progressPercentInt)%")
+                    .font(.system(size: 13, weight: .heavy, design: .rounded))
+                    .foregroundStyle(.primary)
+                    .shadow(color: .black.opacity(0.2), radius: 0.5, x: 0, y: 0.5)
+            }
+            .offset(y: -1) // Slight adjustment for visual balance
+        }
+        .containerBackground(.clear, for: .widget)
+        .widgetAccentable()
+    }
+}
+
+// MARK: - GraphicCircularView
+
+struct GraphicCircularView: View {
+    var entry: HydrationEntry
+    
+    var body: some View {
+        Gauge(value: Double(entry.progressPercent)) {
+            Text("\(entry.progressPercentInt)%")
+                .font(.system(.title3, design: .rounded))
+                .bold()
+        }
+        .gaugeStyle(.accessoryCircular)
+        .tint(.blue)
+        .containerBackground(.fill.tertiary, for: .widget)
+    }
+}
+
+// MARK: - GraphicCornerView (Clean & Minimal Design)
+
+struct GraphicCornerView: View {
+    var entry: HydrationEntry
+
+    var body: some View {
+        Gauge(value: Double(entry.progressPercent)) {
+            Text("") // label
+        } currentValueLabel: {
+            Text("\(entry.progressPercentInt)%")
+                .font(.system(size: 12, weight: .semibold, design: .rounded))
+        } minimumValueLabel: {
+            Text("")
+        } maximumValueLabel: {
+            Text("") // must be same type as others (Text)
+        }
+        .gaugeStyle(.accessoryCircular)
+        .tint(.blue)
+        .containerBackground(.fill.tertiary, for: .widget)
+    }
+}
+
+
+// MARK: - GraphicBezelView
+
+struct GraphicBezelView: View {
+    var entry: HydrationEntry
+    
+    var body: some View {
+        VStack {
+            Gauge(value: Double(entry.progressPercent)) {
+                Image(systemName: "drop.fill")
+                    .foregroundColor(.blue)
+            }
+            .gaugeStyle(.accessoryCircular)
+            .tint(.blue)
+            
+            Text("\(Int(entry.total)) / \(Int(entry.goal)) mL")
+                .font(.system(.subheadline, design: .rounded))
+                .bold()
+        }
+        .containerBackground(.fill.tertiary, for: .widget)
+    }
+}
+
+// MARK: - Widget Config
+
 struct HydrationWidget: Widget {
     let kind: String = "HydrationWidget"
     
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: kind, provider: HydrationProvider()) { entry in
+        StaticConfiguration(kind: kind, provider: Provider()) { entry in
             HydrationWidgetEntryView(entry: entry)
         }
-        .configurationDisplayName("Hydration Status")
-        .description("Track your daily hydration progress.")
+        .configurationDisplayName("Hydration Progress")
+        .description("Track your daily hydration progress")
         .supportedFamilies([
-            .accessoryCircular,
-            .accessoryRectangular,
-            .accessoryCorner,
-            .accessoryInline
+            .accessoryCircular,    // replaces .circularSmall and .graphicCircular
+            .accessoryCorner,      // replaces .graphicCorner
+            .accessoryInline,      // new inline text-only option
+            .accessoryRectangular  // can replace .graphicBezel
         ])
     }
 }
 
-// Widget entry view that adapts to different widget families
+// MARK: - Widget Entry View
+
 struct HydrationWidgetEntryView: View {
-    var entry: HydrationProvider.Entry
+    var entry: Provider.Entry
     @Environment(\.widgetFamily) var family
     
     var body: some View {
         switch family {
-        case .accessoryCorner:
-            CornerHydrationView(entry: entry)
-                .containerBackground(.clear, for: .widget)
         case .accessoryCircular:
-            CircularHydrationView(entry: entry)
-                .containerBackground(.clear, for: .widget)
-        case .accessoryRectangular:
-            RectangularHydrationView(entry: entry)
-                .containerBackground(.clear, for: .widget)
+            CircularPremiumView(entry: entry)
+        case .accessoryCorner:
+            GraphicCornerView(entry: entry)
         case .accessoryInline:
-            InlineHydrationView(entry: entry)
-                .containerBackground(.clear, for: .widget)
+            Text("Hydration: \(entry.progressPercentInt)%")
+        case .accessoryRectangular:
+            GraphicBezelView(entry: entry)
         @unknown default:
-            CircularHydrationView(entry: entry)
-                .containerBackground(.clear, for: .widget)
+            Text("Unsupported")
         }
     }
 }
 
-// Circular widget view (used for Smart Stack)
-struct CircularHydrationView: View {
-    var entry: HydrationProvider.Entry
-    
-    var body: some View {
-        ZStack {
-            // Background circle
-            Circle()
-                .stroke(Color.gray.opacity(0.3), lineWidth: 5)
-            
-            // Progress circle
-            Circle()
-                .trim(from: 0, to: CGFloat(entry.progress))
-                .stroke(
-                    entry.goalMet ? Color.green : Color.blue,
-                    style: StrokeStyle(lineWidth: 5, lineCap: .round)
-                )
-                .rotationEffect(.degrees(-90))
-            
-            // Center text
-            VStack(spacing: 1) {
-                Text("\(Int(entry.progressPercentage * 100))%")
-                    .font(.system(size: 14, weight: .bold))
-                
-                Image(systemName: "drop.fill")
-                    .font(.system(size: 8))
-                    .foregroundColor(.blue)
-            }
-        }
-        .widgetURL(URL(string: "watchhydration://open"))
-    }
+// MARK: - Preview
+
+#Preview("Circular", as: .accessoryCircular) {
+    HydrationWidget()
+} timeline: {
+    HydrationEntry(date: Date(), total: 1500, goal: 2000)
 }
 
-// Corner widget view
-struct CornerHydrationView: View {
-    var entry: HydrationProvider.Entry
-    
-    var body: some View {
-        ZStack {
-            Image(systemName: "drop.fill")
-                .font(.system(size: 18))
-                .foregroundColor(.blue)
-                .widgetAccentable()
-            
-            Gauge(value: entry.progress) {
-                Text("")
-            }
-            .gaugeStyle(.accessoryCircular)
-        }
-        .widgetURL(URL(string: "watchhydration://open"))
-    }
+#Preview("Corner", as: .accessoryCorner) {
+    HydrationWidget()
+} timeline: {
+    HydrationEntry(date: Date(), total: 1500, goal: 2000)
 }
 
-// Rectangular widget view
-struct RectangularHydrationView: View {
-    var entry: HydrationProvider.Entry
-    
-    var body: some View {
-        HStack(spacing: 12) {
-            ZStack {
-                Circle()
-                    .stroke(Color.gray.opacity(0.3), lineWidth: 4)
-                    .frame(width: 40, height: 40)
-                
-                Circle()
-                    .trim(from: 0, to: CGFloat(entry.progress))
-                    .stroke(
-                        entry.goalMet ? Color.green : Color.blue,
-                        style: StrokeStyle(lineWidth: 4, lineCap: .round)
-                    )
-                    .frame(width: 40, height: 40)
-                    .rotationEffect(.degrees(-90))
-                
-                Image(systemName: "drop.fill")
-                    .font(.system(size: 12))
-                    .foregroundColor(.blue)
-            }
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Hydration")
-                    .font(.system(size: 12, weight: .bold))
-                
-                Text("\(Int(entry.currentAmount)) / \(Int(entry.goalAmount)) mL")
-                    .font(.system(size: 12))
-                    .foregroundColor(.secondary)
-            }
-        }
-        .widgetURL(URL(string: "watchhydration://open"))
-    }
+#Preview("Inline", as: .accessoryInline) {
+    HydrationWidget()
+} timeline: {
+    HydrationEntry(date: Date(), total: 1500, goal: 2000)
 }
 
-// Inline widget view
-struct InlineHydrationView: View {
-    var entry: HydrationProvider.Entry
-    
-    var body: some View {
-        HStack(spacing: 4) {
-            Image(systemName: "drop.fill")
-                .font(.system(size: 12))
-                .foregroundColor(.blue)
-            
-            Text("\(Int(entry.progressPercentage * 100))% hydrated")
-                .font(.system(size: 12))
-                .fontWeight(.medium)
-                .minimumScaleFactor(0.8)
-                .lineLimit(1)
-        }
-        .widgetURL(URL(string: "watchhydration://open"))
-    }
+#Preview("Rectangular", as: .accessoryRectangular) {
+    HydrationWidget()
+} timeline: {
+    HydrationEntry(date: Date(), total: 1500, goal: 2000)
 }
 
-// Preview provider
-struct HydrationWidget_Previews: PreviewProvider {
-    static var previews: some View {
-        Group {
-            HydrationWidgetEntryView(entry: .sampleData)
-                .previewContext(WidgetPreviewContext(family: .accessoryCircular))
-                .previewDisplayName("Circular")
-            
-            HydrationWidgetEntryView(entry: .sampleData)
-                .previewContext(WidgetPreviewContext(family: .accessoryCorner))
-                .previewDisplayName("Corner")
-            
-            HydrationWidgetEntryView(entry: .sampleData)
-                .previewContext(WidgetPreviewContext(family: .accessoryRectangular))
-                .previewDisplayName("Rectangular")
-            
-            HydrationWidgetEntryView(entry: .sampleData)
-                .previewContext(WidgetPreviewContext(family: .accessoryInline))
-                .previewDisplayName("Inline")
-            
-            // Preview with goal met
-            HydrationWidgetEntryView(entry: .goalMetSample)
-                .previewContext(WidgetPreviewContext(family: .accessoryCircular))
-                .previewDisplayName("Goal Met")
-        }
+// MARK: - Refresh Helper
+
+extension WidgetCenter {
+    static func refreshHydrationWidget() {
+        // 1. Make sure all data is saved to UserDefaults
+        let sharedDefaults = UserDefaults(suiteName: "group.com.thomaschatting.Watch-Hydration.Shared") ?? UserDefaults.standard
+        
+        // Directly read values from UserDefaults
+        // Instead of using HydrationStore.shared, read existing values
+        let total = sharedDefaults.double(forKey: "hydrationTotal")
+        let goal = sharedDefaults.double(forKey: "hydrationGoal") > 0 ? sharedDefaults.double(forKey: "hydrationGoal") : 2000
+        
+        // Force synchronize
+        sharedDefaults.synchronize()
+        
+        print("💧 Widget refreshing with data: \(total)/\(goal)")
+        
+        // 2. Refresh the widget
+        WidgetCenter.shared.reloadAllTimelines()
+        print("✅ Refreshed hydration widget")
     }
 }

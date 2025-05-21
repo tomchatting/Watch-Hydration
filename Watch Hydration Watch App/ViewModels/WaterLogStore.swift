@@ -8,7 +8,7 @@
 import Foundation
 import SwiftUI
 import Combine
-import ClockKit
+import WidgetKit
 
 class WaterLogStore: ObservableObject {
     @Published var todayLogs: [Int: Double] = [:]
@@ -107,18 +107,7 @@ class WaterLogStore: ObservableObject {
     }
     
     private func refreshComplications() {
-        #if os(watchOS)
-        let server = CLKComplicationServer.sharedInstance()
-        if let complications = server.activeComplications {
-            for complication in complications {
-                server.reloadTimeline(for: complication)
-            }
-            
-            if !complications.isEmpty {
-                print("Refreshed \(complications.count) complications after logging water")
-            }
-        }
-        #endif
+        WidgetCenter.shared.reloadTimelines(ofKind: "HydrationWidget")
     }
     
     func entriesForToday() -> [WaterLogEntry] {
