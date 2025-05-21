@@ -8,8 +8,6 @@
 	<string>Access to your health data is required to display your water intake for the day.</string>
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>This functionality is required to update your water intake, writing to HealthKit.</string>
-	<key>CLKComplicationPrincipalClass</key>
-	<string>$(PRODUCT_MODULE_NAME).ComplicationController</string>
 	<key>WKWatchOnly</key>
 	<true/>
 </dict>

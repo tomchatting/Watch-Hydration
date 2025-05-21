@@ -6,14 +6,12 @@
 	<dict>
 		<key>NSExtensionPointIdentifier</key>
 		<string>com.apple.widgetkit-extension</string>
-		<key>CLKComplicationPrincipalClass</key>
-		<string>$(PRODUCT_MODULE_NAME).ComplicationController</string>
-		<key>WKExtensionDelegateClassName</key>
-		<string>$(PRODUCT_MODULE_NAME).ExtensionDelegate</string>
 		<key>WKBackgroundModes</key>
 		<array>
 			<string>complication</string>
 		</array>
+		<key>WKExtensionDelegateClassName</key>
+		<string>$(PRODUCT_MODULE_NAME).ExtensionDelegate</string>
 	</dict>
 </dict>
 </plist>
