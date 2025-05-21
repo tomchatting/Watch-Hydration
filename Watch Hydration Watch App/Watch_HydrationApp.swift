@@ -9,9 +9,12 @@ import SwiftUI
 
 @main
 struct Watch_Hydration_Watch_AppApp: App {
+    @StateObject private var hydrationStore = HydrationStore.shared
+
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(hydrationStore)
         }
     }
 }

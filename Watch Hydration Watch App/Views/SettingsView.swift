@@ -9,10 +9,8 @@ import SwiftUI
 
 struct SettingsView: View {
     @AppStorage("hydrationGoal") private var goal: Double = 2000
-    @StateObject private var healthKitStatus = HealthKitAuthStatus()
     @State private var showingDebugMenu = false
-    @StateObject private var progress = HydrationProgress()
-    @StateObject private var logStore = WaterLogStore()
+    @EnvironmentObject private var hydrationStore: HydrationStore
     let minGoal: Double = 500
     let maxGoal: Double = 3000
     
@@ -41,7 +39,7 @@ struct SettingsView: View {
             .padding()
             
             VStack {
-                if healthKitStatus.isAuthorized {
+                if hydrationStore.healthKitStatus.isAuthorized {
                     Label("HealthKit enabled", systemImage: "heart.fill")
                         .foregroundColor(.white)
                         .font(.caption)
@@ -76,18 +74,18 @@ struct SettingsView: View {
                             .font(.headline)
                         
                         VStack(alignment: .leading) {
-                            Text("Current Progress: \(Int(progress.total))/\(Int(progress.goal)) ml")
+                            Text("Current Progress: \(Int(hydrationStore.progress.total))/\(Int(hydrationStore.progress.goal)) ml")
                                 .font(.subheadline)
                             
-                            Text("Goal percentage: \(Int((progress.total / max(1, progress.goal)) * 100))%")
+                            Text("Goal percentage: \(Int((hydrationStore.progress.total / max(1, hydrationStore.progress.goal)) * 100))%")
                                 .font(.subheadline)
                         }
                         
                         Button("Delete Today's Progress") {
                             Task {
-                                logStore.clearTodayEntries()
+                                hydrationStore.logStore.clearTodayEntries()
                                 HealthKitManager.shared.deleteAllWaterEntriesForToday()
-                                await progress.loadToday()
+                                await hydrationStore.progress.loadToday()
                                 showingDebugMenu = false
                             }
                         }
@@ -96,20 +94,20 @@ struct SettingsView: View {
                         
                         Button("Set Progress Near Goal (95%)") {
                             Task {
-                                logStore.clearTodayEntries()
+                                hydrationStore.logStore.clearTodayEntries()
                                 HealthKitManager.shared.deleteAllWaterEntriesForToday()
                                 
-                                let nearGoalAmount = progress.goal * 0.95
+                                let nearGoalAmount = hydrationStore.progress.goal * 0.95
                                 
-                                logStore.log(amount: nearGoalAmount)
+                                hydrationStore.logStore.log(amount: nearGoalAmount)
                                 
-                                if healthKitStatus.isAuthorized {
+                                if hydrationStore.healthKitStatus.isAuthorized {
                                     HealthKitManager.shared.logWater(amountInML: nearGoalAmount)
                                 }
 
-                                await progress.loadToday()
+                                await hydrationStore.progress.loadToday()
                                 
-                                print("Debug: Progress set to \(progress.total)/\(progress.goal) (\(Int((progress.total/progress.goal)*100))%)")
+                                print("Debug: Progress set to \(hydrationStore.progress.total)/\(hydrationStore.progress.goal) (\(Int((hydrationStore.progress.total/hydrationStore.progress.goal)*100))%)")
                                 showingDebugMenu = false
                             }
                         }
@@ -122,38 +120,37 @@ struct SettingsView: View {
         }
         .onAppear {
             Task {
-                await progress.loadToday()
+                await hydrationStore.refreshData()
             }
         }
-        .environmentObject(progress)
     }
     
     // Debug functions
     func deleteAllTodaysProgress() async {
-        logStore.clearTodayEntries()
+        hydrationStore.logStore.clearTodayEntries()
         
-        if healthKitStatus.isAuthorized {
+        if hydrationStore.healthKitStatus.isAuthorized {
             HealthKitManager.shared.deleteAllWaterEntriesForToday()
         }
         
-        await progress.loadToday()
+        await hydrationStore.progress.loadToday()
         
-        print("Debug: All today's progress deleted. Current total: \(progress.total)")
+        print("Debug: All today's progress deleted. Current total: \(hydrationStore.progress.total)")
     }
     
     func setProgressNearGoal() async {
         await deleteAllTodaysProgress()
         
-        let nearGoalAmount = progress.goal * 0.95
+        let nearGoalAmount = hydrationStore.progress.goal * 0.95
         
-        logStore.log(amount: nearGoalAmount)
+        hydrationStore.logStore.log(amount: nearGoalAmount)
         
-        if healthKitStatus.isAuthorized {
+        if hydrationStore.healthKitStatus.isAuthorized {
             HealthKitManager.shared.logWater(amountInML: nearGoalAmount)
         }
         
-        await progress.loadToday()
+        await hydrationStore.progress.loadToday()
         
-        print("Debug: Progress set to \(progress.total)/\(progress.goal) (\(Int((progress.total/progress.goal)*100))%)")
+        print("Debug: Progress set to \(hydrationStore.progress.total)/\(hydrationStore.progress.goal) (\(Int((hydrationStore.progress.total/hydrationStore.progress.goal)*100))%)")
     }
 }

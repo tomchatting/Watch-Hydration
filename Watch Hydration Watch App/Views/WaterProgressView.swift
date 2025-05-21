@@ -9,13 +9,11 @@ import SwiftUI
 import HealthKit
 
 struct WaterProgressView: View {
-    @StateObject private var healthKitStatus = HealthKitAuthStatus()
-    @StateObject private var logStore = WaterLogStore()
-    @StateObject private var progress = HydrationProgress()
+    @EnvironmentObject private var hydrationStore: HydrationStore
 
     var body: some View {
         
-        let progressRatio = progress.total / progress.goal
+        let progressRatio = hydrationStore.progress.total / hydrationStore.progress.goal
         let progressTrim = min(progressRatio, 1.0)
 
         ScrollView {
@@ -29,17 +27,16 @@ struct WaterProgressView: View {
 
             }
             .padding()
-            .environmentObject(progress)
         }
         .onAppear {
             Task {
-                await progress.loadToday()
+                await hydrationStore.refreshData()
             }
         }
     }
 
     private var goalText: some View {
-        Text("Goal: \(progress.goal < 1000 ? "\(Int(progress.goal)) mL" : "\(String(format: "%.2f", progress.goal / 1000)) L")")
+        Text("Goal: \(hydrationStore.progress.goal < 1000 ? "\(Int(hydrationStore.progress.goal)) mL" : "\(String(format: "%.2f", hydrationStore.progress.goal / 1000)) L")")
             .font(.footnote)
             .foregroundColor(.secondary)
     }
@@ -51,17 +48,17 @@ struct WaterProgressView: View {
             
             Circle()
                 .trim(from: 0, to: progressTrim)
-                .stroke(progress.total / progress.goal >= 1.0 ? Color.green : Color.blue, style: StrokeStyle(lineWidth: 10, lineCap: .round))
+                .stroke(hydrationStore.progress.total / hydrationStore.progress.goal >= 1.0 ? Color.green : Color.blue, style: StrokeStyle(lineWidth: 10, lineCap: .round))
                 .rotationEffect(.degrees(-90))
             
-            Text(progress.total < 1000 ? "\(Int(progress.total)) mL" : "\(String(format: "%.2f", Double(progress.total/1000))) L")
+            Text(hydrationStore.progress.total < 1000 ? "\(Int(hydrationStore.progress.total)) mL" : "\(String(format: "%.2f", Double(hydrationStore.progress.total/1000))) L")
                 .font(.title3)
         }
         .frame(width: 80, height: 80)
     }
 
     private var timelineEntries: some View {
-        ForEach(progress.entries.filter { $0.amount > 0 }) { entry in
+        ForEach(hydrationStore.progress.entries.filter { $0.amount > 0 }) { entry in
             timelineEntryView(for: entry)
         }
     }

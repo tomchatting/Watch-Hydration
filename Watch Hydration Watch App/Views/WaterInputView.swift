@@ -1,34 +1,28 @@
+//
+//  WaterInputView.swift
+//  Watch Hydration
+//
+//  Created by Thomas Chatting on 13/05/2025.
+//
+
 import SwiftUI
 import Combine
 
 struct WaterInputView: View {
     @State private var liquidAmount: Double = 0
     @State private var fillPercent: Double = 0
-    @StateObject private var logStore = WaterLogStore()
     @State private var crownValue: Double = 0
     @State private var lastCrownValue: Double = 0
     @State private var isLogging: Bool = false
     @State private var waveOffset = 0.0
+    @State private var isAnimating = false
+    @State private var selectedLiquid: LiquidType = LiquidType.defaultLiquid
     @FocusState private var isEditingAmount: Bool
     @State private var isChoosingLiquid = false
-    @StateObject private var healthKitStatus = HealthKitAuthStatus()
-    @StateObject var animationManager = BubbleConfettiManager()
-    @StateObject private var progress = HydrationProgress()
+    @EnvironmentObject private var hydrationStore: HydrationStore
     @Environment(\.accessibilityReduceMotion) var reduceMotion
-
-    struct LiquidData {
-        static let all: [LiquidType] = [
-            LiquidType(name: "Water", coefficient: 1.0, color: .blue),
-            LiquidType(name: "Coffee", coefficient: 0.8, color: .brown),
-            LiquidType(name: "Juice", coefficient: 0.9, color: .orange),
-            LiquidType(name: "Cola", coefficient: 0.9, color: .gray),
-            LiquidType(name: "Green Tea", coefficient: 0.95, color: .green),
-            LiquidType(name: "Black Tea", coefficient: 0.85, color: .brown),
-            LiquidType(name: "Tea w/ milk", coefficient: 0.9, color: .gray)
-        ]
-    }
+    @Environment(\.scenePhase) private var scenePhase
     
-    @State private var selectedLiquid: LiquidType = LiquidData.all[0]
     let timer = Timer.publish(every: 0.05, on: .main, in: .common).autoconnect()
     let maxAmount: Double = 1000
 
@@ -52,9 +46,19 @@ struct WaterInputView: View {
                         .offset(y: CGFloat(1 - fillPercent) * 68)
                         .clipShape(CupShape())
                         .onReceive(timer) { _ in
-                            waveOffset += 0.1
+                            if isAnimating {
+                                waveOffset += 0.1
+                            }
                         }
-                        
+                        .onChange(of: scenePhase) { _, newPhase in
+                            isAnimating = (newPhase == .active)
+                        }
+                        .onAppear {
+                            isAnimating = true
+                        }
+                        .onDisappear {
+                            isAnimating = false
+                        }
                     }
                     .overlay(
                         Rectangle()
@@ -68,7 +72,7 @@ struct WaterInputView: View {
                     .sheet(isPresented: $isChoosingLiquid) {
                         ScrollView(.vertical) {
                             VStack(spacing: 10) {
-                                ForEach(LiquidData.all) { liquid in
+                                ForEach(LiquidType.all) { liquid in
                                     Button(action: {
                                         selectedLiquid = liquid
                                         isChoosingLiquid = false
@@ -110,12 +114,14 @@ struct WaterInputView: View {
                         fillPercent = liquidAmount / maxAmount
                     }
                     .disabled(liquidAmount == 0 || isLogging)
+                    .accessibilityIdentifier("DecrementButton")
                     
                     Button("+") {
                         liquidAmount = min(maxAmount, liquidAmount + 50)
                         fillPercent = liquidAmount / maxAmount
                     }
                     .disabled(liquidAmount == maxAmount || isLogging)
+                    .accessibilityIdentifier("IncrementButton")
                 }
                 
                 Button("Drink \(selectedLiquid.name)") {
@@ -125,20 +131,20 @@ struct WaterInputView: View {
                         let currentLiquid = selectedLiquid
                         let valueToLog = liquidAmount * currentLiquid.coefficient
                         
-                        logStore.log(amount: valueToLog)
+                        hydrationStore.logStore.log(amount: valueToLog)
                         
-                        await progress.loadToday()
+                        await hydrationStore.progress.loadToday()
                         
-                        let totalWithCurrentDrink = progress.total + valueToLog
+                        let totalWithCurrentDrink = hydrationStore.progress.total + valueToLog
                         
-                        let goalReached = totalWithCurrentDrink >= progress.goal
+                        let goalReached = totalWithCurrentDrink >= hydrationStore.progress.goal
                         
                         // Debug for verification
-                        print("Progress: \(progress.total) + \(valueToLog) = \(totalWithCurrentDrink)/\(progress.goal)")
+                        print("Progress: \(hydrationStore.progress.total) + \(valueToLog) = \(totalWithCurrentDrink)/\(hydrationStore.progress.goal)")
                         print("Goal reached: \(goalReached), Reduce Motion: \(reduceMotion)")
                         
-                        healthKitStatus.requestAuthorization {
-                            if healthKitStatus.isAuthorized {
+                        hydrationStore.healthKitStatus.requestAuthorization {
+                            if hydrationStore.healthKitStatus.isAuthorized {
                                 HealthKitManager.shared.logWater(amountInML: valueToLog)
                             }
                         }
@@ -147,14 +153,15 @@ struct WaterInputView: View {
                         
                         if goalReached && !reduceMotion {
                             print("🎉 Triggering confetti!")
-                            animationManager.triggerConfetti()
+                            hydrationStore.animationManager.triggerConfetti()
                         } else if !reduceMotion {
                             print("💧 Triggering bubbles")
-                            animationManager.triggerBubbles()
+                            hydrationStore.animationManager.triggerBubbles()
                         }
                     }
                 }
                 .disabled(liquidAmount == 0 || isLogging)
+                .accessibilityIdentifier("DrinkButton")
             }
             
             Slider(value: $liquidAmount, in: 0...maxAmount, step: 1)
@@ -166,37 +173,32 @@ struct WaterInputView: View {
                 .opacity(0)
             
             // Bubbles
-            ForEach(animationManager.bubbles, id: \.self) { id in
+            ForEach(hydrationStore.animationManager.bubbles, id: \.self) { id in
                 BubbleView(id: id)
             }
 
             // Confetti
-            if animationManager.showConfetti {
+            if hydrationStore.animationManager.showConfetti {
                 ConfettiView()
             }
         }
         .onAppear {
             Task {
-                await progress.loadToday()
+                await hydrationStore.refreshData()
             }
         }
-        .environmentObject(progress)
     }
     
     func animateWaterDecrease() {
-        let decrementValue = 1.0
-
-        Timer.scheduledTimer(withTimeInterval: 0.001, repeats: true) { timer in
-            if liquidAmount > 0 {
-                withAnimation(.linear(duration: 0.001)) {
-                    liquidAmount = max(0, liquidAmount - decrementValue)
-                }
-            } else {
-                timer.invalidate()
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.001) {
-                    isLogging = false
-                }
-            }
+        isLogging = true
+        
+        withAnimation(.linear(duration: 0.5)) {
+            liquidAmount = 0
+            fillPercent = 0
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+            isLogging = false
         }
     }
 }

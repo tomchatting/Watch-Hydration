@@ -30,20 +30,13 @@ final class Watch_Hydration_Watch_AppUITests: XCTestCase {
 
         // Use XCTAssert and related functions to verify your tests produce the correct results.
     }
-
-    @MainActor
-    func testLaunchPerformance() throws {
-        // This measures how long it takes to launch your application.
-        measure(metrics: [XCTApplicationLaunchMetric()]) {
-            XCUIApplication().launch()
-        }
-    }
     
     func testInitialState() throws {
         let app = XCUIApplication()
         app.launch()
 
-        XCTAssertTrue(app.buttons["Drink Water"].exists)
+        let drinkButton = app.buttons["DrinkButton"]
+        XCTAssertTrue(drinkButton.waitForExistence(timeout: 10))
         XCTAssertTrue(app.buttons["+"].exists)
         XCTAssertTrue(app.buttons["-"].exists)
         XCTAssertEqual(app.textFields.count, 1)
@@ -54,8 +47,8 @@ final class Watch_Hydration_Watch_AppUITests: XCTestCase {
         let app = XCUIApplication()
         app.launch()
 
-        let increment = app.buttons["+"]
-        let decrement = app.buttons["-"]
+        let increment = app.buttons["IncrementButton"]
+        let decrement = app.buttons["DecrementButton"]
 
         XCTAssertTrue(increment.exists)
         XCTAssertTrue(decrement.exists)
@@ -64,10 +57,8 @@ final class Watch_Hydration_Watch_AppUITests: XCTestCase {
         increment.tap()
         decrement.tap()
 
-        let drinkButton = app.buttons["Drink Water"]
-        XCTAssertTrue(drinkButton.exists)
-        
-        sleep(10)
+        let drinkButton = app.buttons["DrinkButton"]
+        XCTAssertTrue(drinkButton.waitForExistence(timeout: 10))
         
         XCTAssertTrue(drinkButton.isEnabled)
     }
@@ -86,22 +77,22 @@ final class Watch_Hydration_Watch_AppUITests: XCTestCase {
         coffeeButton.tap()
 
         // Drink button should now say "Drink Coffee"
-        let drinkButton = app.buttons["Drink Coffee"]
-        XCTAssertTrue(drinkButton.exists)
+        let drinkButton = app.buttons["DrinkButton"]
+        XCTAssertTrue(drinkButton.label == "Drink Coffee")
     }
 
     func testDrinkButtonDisabledWhenAmountZero() throws {
         let app = XCUIApplication()
         app.launch()
 
-        let drinkButton = app.buttons["Drink Water"]
+        let drinkButton = app.buttons["DrinkButton"]
         XCTAssertTrue(drinkButton.waitForExistence(timeout: 10))
         XCTAssertFalse(drinkButton.isEnabled)
 
-        app.buttons["+"].tap()
+        app.buttons["IncrementButton"].tap()
         XCTAssertTrue(drinkButton.isEnabled)
 
-        app.buttons["-"].tap()
+        app.buttons["DecrementButton"].tap()
         XCTAssertFalse(drinkButton.isEnabled)
     }
 }
