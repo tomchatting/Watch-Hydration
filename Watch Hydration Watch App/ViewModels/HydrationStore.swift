@@ -1,7 +1,7 @@
 // HydrationStore.swift
 import SwiftUI
 import Combine
-import ClockKit
+import WidgetKit
 
 @MainActor
 class HydrationStore: ObservableObject {
@@ -27,17 +27,18 @@ class HydrationStore: ObservableObject {
     private func setupObservers() {
         progress.objectWillChange.sink { [weak self] _ in
             self?.saveToUserDefaults()
-            self?.updateComplications()
             self?.objectWillChange.send()
         }.store(in: &cancellables)
         
         logStore.objectWillChange.sink { [weak self] _ in
             Task {
                 await self?.progress.loadToday()
-                self?.saveToUserDefaults()
-                self?.updateComplications()
-
+                
                 await MainActor.run {
+                    self?.saveToUserDefaults()
+                    
+                    WidgetCenter.shared.reloadTimelines(ofKind: "HydrationWidget")
+                    
                     self?.objectWillChange.send()
                 }
             }
@@ -71,18 +72,6 @@ class HydrationStore: ObservableObject {
         if savedGoal > 0 {
             progress.goal = savedGoal
         }
-    }
-    
-    private func updateComplications() {
-        #if os(watchOS)
-        let complicationServer = CLKComplicationServer.sharedInstance()
-        
-        if let activeComplications = complicationServer.activeComplications {
-            for complication in activeComplications {
-                complicationServer.reloadTimeline(for: complication)
-            }
-        }
-        #endif
     }
     
     func refreshData() async {

@@ -87,7 +87,7 @@ struct SettingsView: View {
                         
                         Button("Delete Today's Progress") {
                             Task {
-                                hydrationStore.logStore.clearTodayEntries()
+                                await hydrationStore.logStore.clearTodayEntries()
                                 HealthKitManager.shared.deleteAllWaterEntriesForToday()
                                 await hydrationStore.progress.loadToday()
                                 showingDebugMenu = false
@@ -98,12 +98,12 @@ struct SettingsView: View {
                         
                         Button("Set Progress Near Goal (95%)") {
                             Task {
-                                hydrationStore.logStore.clearTodayEntries()
+                                await hydrationStore.logStore.clearTodayEntries()
                                 HealthKitManager.shared.deleteAllWaterEntriesForToday()
                                 
                                 let nearGoalAmount = hydrationStore.progress.goal * 0.95
                                 
-                                hydrationStore.logStore.log(amount: nearGoalAmount)
+                                await hydrationStore.logStore.log(amount: nearGoalAmount)
                                 
                                 if hydrationStore.healthKitStatus.isAuthorized {
                                     HealthKitManager.shared.logWater(amountInML: nearGoalAmount)
@@ -136,7 +136,7 @@ struct SettingsView: View {
     
     // Debug functions
     func deleteAllTodaysProgress() async {
-        hydrationStore.logStore.clearTodayEntries()
+        await hydrationStore.logStore.clearTodayEntries()
         
         if hydrationStore.healthKitStatus.isAuthorized {
             HealthKitManager.shared.deleteAllWaterEntriesForToday()
@@ -152,7 +152,7 @@ struct SettingsView: View {
         
         let nearGoalAmount = hydrationStore.progress.goal * 0.95
         
-        hydrationStore.logStore.log(amount: nearGoalAmount)
+        await hydrationStore.logStore.log(amount: nearGoalAmount)
         
         if hydrationStore.healthKitStatus.isAuthorized {
             HealthKitManager.shared.logWater(amountInML: nearGoalAmount)

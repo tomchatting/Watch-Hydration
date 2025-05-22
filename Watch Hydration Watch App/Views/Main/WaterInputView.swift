@@ -132,15 +132,13 @@ struct WaterInputView: View {
                         let currentLiquid = selectedLiquid
                         let valueToLog = liquidAmount * currentLiquid.coefficient
                         
-                        hydrationStore.logStore.log(amount: valueToLog)
+                        await hydrationStore.logStore.log(amount: valueToLog)
                         
-                        await hydrationStore.progress.loadToday()
+                        await hydrationStore.refreshData()
                         
-                        let totalWithCurrentDrink = hydrationStore.progress.total + valueToLog
+                        let goalReached = hydrationStore.progress.total >= hydrationStore.progress.goal
                         
-                        let goalReached = totalWithCurrentDrink >= hydrationStore.progress.goal
-                        
-                        print("Progress: \(hydrationStore.progress.total) + \(valueToLog) = \(totalWithCurrentDrink)/\(hydrationStore.progress.goal)")
+                        print("Progress after logging: \(hydrationStore.progress.total)/\(hydrationStore.progress.goal)")
                         print("Goal reached: \(goalReached), Reduce Motion: \(reduceMotion)")
                         
                         hydrationStore.healthKitStatus.requestAuthorization {
@@ -158,7 +156,6 @@ struct WaterInputView: View {
                             print("💧 Triggering bubbles")
                             hydrationStore.animationManager.triggerBubbles()
                         }
-
                     }
                 }
                 .disabled(liquidAmount == 0 || isLogging)

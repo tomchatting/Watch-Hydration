@@ -230,21 +230,21 @@ struct HydrationWidgetEntryView: View {
 
 extension WidgetCenter {
     static func refreshHydrationWidget() {
-        // 1. Make sure all data is saved to UserDefaults
+        // Force synchronize to ensure latest data is available
         let sharedDefaults = UserDefaults(suiteName: "group.com.thomaschatting.Watch-Hydration.Shared") ?? UserDefaults.standard
-        
-        // Directly read values from UserDefaults
-        // Instead of using HydrationStore.shared, read existing values
-        let total = sharedDefaults.double(forKey: "hydrationTotal")
-        let goal = sharedDefaults.double(forKey: "hydrationGoal") > 0 ? sharedDefaults.double(forKey: "hydrationGoal") : 2000
-        
-        // Force synchronize
         sharedDefaults.synchronize()
         
-        print("💧 Widget refreshing with data: \(total)/\(goal)")
-        
-        // 2. Refresh the widget
-        WidgetCenter.shared.reloadAllTimelines()
-        print("✅ Refreshed hydration widget")
+        // Small delay to ensure UserDefaults sync is complete
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            // Directly read values from UserDefaults
+            let total = sharedDefaults.double(forKey: "hydrationTotal")
+            let goal = sharedDefaults.double(forKey: "hydrationGoal") > 0 ? sharedDefaults.double(forKey: "hydrationGoal") : 2000
+            
+            print("💧 Widget refreshing with data: \(total)/\(goal)")
+            
+            // Refresh the widget
+            WidgetCenter.shared.reloadAllTimelines()
+            print("✅ Refreshed hydration widget")
+        }
     }
 }
