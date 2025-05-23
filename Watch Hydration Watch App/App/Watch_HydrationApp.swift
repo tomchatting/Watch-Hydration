@@ -9,13 +9,15 @@ import SwiftUI
 
 @main
 struct Watch_HydrationApp: App {
-    @StateObject private var hydrationStore = HydrationStore.shared
     
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .environment(\.waterIntakeService, DIContainer.shared.createWaterIntakeService())
                 .configureHydrationApp()
+                .task {
+                    // Run migration on app launch if needed
+                    await MigrationHelper.shared.runOnAppLaunch()
+                }
         }
     }
 }

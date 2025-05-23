@@ -11,58 +11,53 @@ import HealthKit
 
 class ExtensionDelegate: NSObject, WKExtensionDelegate {
 
-    let healthStore = HKHealthStore()
+    private let healthKitRepository = HealthKitWaterRepository()
 
     func applicationDidFinishLaunching() {
-        let server = CLKComplicationServer.sharedInstance()
-        server.activeComplications?.forEach { server.reloadTimeline(for: $0) }
-
-        HealthKitManager.shared.requestAuthorization { success, error in
-            if success {
-                print("HealthKit authorized")
-            } else {
-                print("HealthKit failed: \(error?.localizedDescription ?? "Unknown")")
-            }
-        }
+        // Reload complications on launch
+        reloadComplications()
         
-        // Register for complication updates
-        let complicationServer = CLKComplicationServer.sharedInstance()
-        if let complications = complicationServer.activeComplications {
-            for complication in complications {
-                complicationServer.reloadTimeline(for: complication)
-            }
+        // Request HealthKit authorization if not already granted
+        Task {
+            await requestHealthKitAuthorizationIfNeeded()
         }
         
         // Schedule background refresh
         scheduleBackgroundRefresh()
     }
     
-    private func requestHealthKitAuthorization() {
-        guard HKHealthStore.isHealthDataAvailable() else {
-            print("HealthKit is not available on this device.")
+    private func requestHealthKitAuthorizationIfNeeded() async {
+        // Only request if not already authorized
+        guard !healthKitRepository.isAuthorized() else {
+            print("HealthKit already authorized")
             return
         }
-
-        let waterType = HKObjectType.quantityType(forIdentifier: .dietaryWater)!
-        let typesToShare: Set<HKSampleType> = [waterType]
-        let typesToRead: Set<HKObjectType> = [waterType]
-
-        healthStore.requestAuthorization(toShare: typesToShare, read: typesToRead) { success, error in
-            if let error = error {
-                print("Error requesting HealthKit authorization: \(error.localizedDescription)")
-                return
-            }
-
+        
+        do {
+            let success = try await healthKitRepository.requestPermissions()
             if success {
-                print("HealthKit authorization granted.")
+                print("HealthKit authorized")
+                // Reload complications after authorization
+                reloadComplications()
             } else {
-                print("HealthKit authorization denied.")
+                print("HealthKit authorization denied")
+            }
+        } catch {
+            print("HealthKit authorization failed: \(error.localizedDescription)")
+        }
+    }
+    
+    private func reloadComplications() {
+        let complicationServer = CLKComplicationServer.sharedInstance()
+        if let complications = complicationServer.activeComplications {
+            for complication in complications {
+                complicationServer.reloadTimeline(for: complication)
             }
         }
     }
     
     func scheduleBackgroundRefresh() {
-        let refreshInterval: TimeInterval = 60 * 60
+        let refreshInterval: TimeInterval = 60 * 60 // 1 hour
         
         WKExtension.shared().scheduleBackgroundRefresh(
             withPreferredDate: Date(timeIntervalSinceNow: refreshInterval),
@@ -70,6 +65,8 @@ class ExtensionDelegate: NSObject, WKExtensionDelegate {
         ) { (error) in
             if let error = error {
                 print("Background refresh scheduling error: \(error.localizedDescription)")
+            } else {
+                print("Background refresh scheduled successfully")
             }
         }
     }
@@ -78,22 +75,48 @@ class ExtensionDelegate: NSObject, WKExtensionDelegate {
         for task in backgroundTasks {
             switch task {
             case let backgroundTask as WKApplicationRefreshBackgroundTask:
+                // Handle background refresh
+                handleBackgroundRefresh(backgroundTask)
                 
-                let complicationServer = CLKComplicationServer.sharedInstance()
-                if let complications = complicationServer.activeComplications {
-                    for complication in complications {
-                        complicationServer.reloadTimeline(for: complication)
-                    }
-                }
-                
-                scheduleBackgroundRefresh()
-                
-                backgroundTask.setTaskCompletedWithSnapshot(false)
+            case let snapshotTask as WKSnapshotRefreshBackgroundTask:
+                // Handle snapshot refresh
+                snapshotTask.setTaskCompleted(restoredDefaultState: true, estimatedSnapshotExpiration: Date.distantFuture, userInfo: nil)
                 
             default:
                 task.setTaskCompletedWithSnapshot(false)
             }
         }
     }
-
+    
+    private func handleBackgroundRefresh(_ backgroundTask: WKApplicationRefreshBackgroundTask) {
+        Task {
+            do {
+                // Update widget data in shared UserDefaults if HealthKit is authorized
+                if healthKitRepository.isAuthorized() {
+                    let todaysEntries = try await healthKitRepository.getTodaysEntries()
+                    let total = HydrationCalculator.calculateTotal(entries: todaysEntries)
+                    
+                    // Update shared UserDefaults for widgets
+                    let sharedDefaults = UserDefaults(suiteName: AppConfiguration.appGroupIdentifier)
+                    sharedDefaults?.set(total, forKey: "hydrationTotal")
+                    sharedDefaults?.synchronize()
+                    
+                    print("Background refresh: Updated total to \(total)mL")
+                }
+                
+                // Reload complications with fresh data
+                reloadComplications()
+                
+                // Schedule next background refresh
+                scheduleBackgroundRefresh()
+                
+                // Mark task as completed
+                backgroundTask.setTaskCompletedWithSnapshot(false)
+                
+            } catch {
+                print("Background refresh error: \(error.localizedDescription)")
+                backgroundTask.setTaskCompletedWithSnapshot(false)
+            }
+        }
+    }
 }
