@@ -14,23 +14,8 @@ struct Watch_HydrationApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .environmentObject(hydrationStore)
-                .onOpenURL { url in
-                    if url.scheme == "watchhydration" {
-                        print("App opened from widget or complication")
-                    }
-                }
-                .onReceive(NotificationCenter.default.publisher(for: WKExtension.applicationDidBecomeActiveNotification)) { _ in
-                    Task {
-                        HydrationStore.shared.logStore.refreshIfNeeded()
-                        await HydrationStore.shared.refreshData()
-                    }
-                }
-                .onReceive(NotificationCenter.default.publisher(for: WKExtension.applicationWillResignActiveNotification)) { _ in
-                    Task {
-                        await HydrationStore.shared.logStore.save()
-                    }
-                }
+                .environment(\.waterIntakeService, DIContainer.shared.createWaterIntakeService())
+                .configureHydrationApp()
         }
     }
 }

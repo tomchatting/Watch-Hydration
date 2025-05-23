@@ -8,15 +8,15 @@
 import SwiftUI
 
 struct ConfettiView: View {
-	let count = 15
+    let count = 15
 
-	var body: some View {
-		ZStack {
-			ForEach(0..<count, id: \.self) { i in
-				ConfettiPiece(angle: .degrees(Double.random(in: 0...360)), delay: Double(i) * 0.02)
-			}
-		}
-	}
+    var body: some View {
+        ZStack {
+            ForEach(0..<count, id: \.self) { i in
+                ConfettiPiece(angle: .degrees(Double.random(in: 0...360)), delay: Double(i) * 0.02)
+            }
+        }
+    }
 }
 
 struct ConfettiPiece: View {
@@ -50,4 +50,3 @@ struct ConfettiPiece: View {
             }
     }
 }
-

@@ -9,6 +9,7 @@
 import SwiftUI
 import Combine
 
+@MainActor
 class ConfettiManager: ObservableObject {
     @Published var showConfetti = false
     

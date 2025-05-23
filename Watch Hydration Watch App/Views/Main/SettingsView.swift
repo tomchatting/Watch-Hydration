@@ -10,7 +10,9 @@ import WidgetKit
 
 struct SettingsView: View {
     @State private var showingDebugMenu = false
-    @EnvironmentObject private var hydrationStore: HydrationStore
+    @EnvironmentObject private var viewModel: HydrationViewModel
+    @State private var tempGoal: Double = 2000
+    
     let minGoal: Double = 500
     let maxGoal: Double = 3000
     
@@ -23,37 +25,54 @@ struct SettingsView: View {
     }
 
     var body: some View {
-        VStack {
+        ScrollView {
             VStack {
-                Slider(value: $hydrationStore.progress.goal, in: minGoal...maxGoal, step: 100) {
-                    Text("Goal: \(Int(hydrationStore.progress.goal)) mL")
+                Slider(value: $tempGoal, in: minGoal...maxGoal, step: 100) {
+                    Text("Goal: \(Int(tempGoal)) mL")
                 }
-                .onChange(of: hydrationStore.progress.goal) { _, newValue in
-                    UserDefaults.standard.set(newValue, forKey: "hydrationGoal")
-                    WidgetCenter.shared.reloadTimelines(ofKind: "HydrationWidget")
+                .onChange(of: tempGoal) { _, newValue in
+                    viewModel.updateGoal(to: newValue)
                 }
-                .onDisappear {
-                    let sharedDefaults = UserDefaults(suiteName: "group.com.thomaschatting.Watch-Hydration.Shared")
-                    sharedDefaults?.set(hydrationStore.progress.goal, forKey: "hydrationGoal")
+                .onAppear {
+                    tempGoal = viewModel.waterIntakeService.goal
                 }
 
-                Text("Goal: \(Int(hydrationStore.progress.goal)) mL")
+                Text("Goal: \(Int(tempGoal)) mL")
                     .font(.caption)
                     .padding()
             }
             .padding()
             
             VStack {
-                if hydrationStore.healthKitStatus.isAuthorized {
+                if viewModel.waterIntakeService.isHealthKitAuthorized {
                     Label("HealthKit enabled", systemImage: "heart.fill")
                         .foregroundColor(.white)
                         .font(.caption)
                         .padding(.top, 5)
                 } else {
-                    Label("HealthKit disabled", systemImage: "exclamationmark.triangle.fill")
-                        .foregroundColor(.yellow)
+                    VStack(spacing: 8) {
+                        Label("HealthKit disabled", systemImage: "exclamationmark.triangle.fill")
+                            .foregroundColor(.yellow)
+                            .font(.caption)
+                        
+                        Button("Enable HealthKit") {
+                            Task {
+                                await viewModel.requestHealthKitPermissions()
+                            }
+                        }
+                        .buttonStyle(.borderedProminent)
                         .font(.caption)
-                        .padding(.top, 5)
+                        
+                        // Show error message if permission request failed
+                        if let errorMessage = viewModel.waterIntakeService.errorMessage {
+                            Text(errorMessage)
+                                .font(.caption2)
+                                .foregroundColor(.red)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal)
+                        }
+                    }
+                    .padding(.top, 5)
                 }
             }
             
@@ -74,93 +93,78 @@ struct SettingsView: View {
                         .foregroundColor(.gray)
                 }
                 .sheet(isPresented: $showingDebugMenu) {
-                    ScrollView {
-                        Text("Debug Menu")
-                            .font(.headline)
-                        
-                        VStack(alignment: .leading) {
-                            Text("Current Progress: \(Int(hydrationStore.progress.total))/\(Int(hydrationStore.progress.goal)) ml")
-                                .font(.subheadline)
-                            
-                            Text("Goal percentage: \(Int((hydrationStore.progress.total / max(1, hydrationStore.progress.goal)) * 100))%")
-                                .font(.subheadline)
-                        }
-                        
-                        Button("Delete Today's Progress") {
-                            Task {
-                                await hydrationStore.logStore.clearTodayEntries()
-                                HealthKitManager.shared.deleteAllWaterEntriesForToday()
-                                await hydrationStore.progress.loadToday()
-                                showingDebugMenu = false
-                            }
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .tint(.red)
-                        
-                        Button("Set Progress Near Goal (95%)") {
-                            Task {
-                                await hydrationStore.logStore.clearTodayEntries()
-                                HealthKitManager.shared.deleteAllWaterEntriesForToday()
-                                
-                                let nearGoalAmount = hydrationStore.progress.goal * 0.95
-                                
-                                await hydrationStore.logStore.log(amount: nearGoalAmount)
-                                
-                                if hydrationStore.healthKitStatus.isAuthorized {
-                                    HealthKitManager.shared.logWater(amountInML: nearGoalAmount)
-                                }
-
-                                await hydrationStore.progress.loadToday()
-                                
-                                print("Debug: Progress set to \(hydrationStore.progress.total)/\(hydrationStore.progress.goal) (\(Int((hydrationStore.progress.total/hydrationStore.progress.goal)*100))%)")
-                                showingDebugMenu = false
-                            }
-                        }
-                        .buttonStyle(.borderedProminent)
-                        
-                        Button("Force refresh complications") {
-                            Task {
-                                WidgetCenter.shared.reloadTimelines(ofKind: "HydrationWidget")
-                            }
-                        }
-                    }
+                    debugMenuSheet
                 }
                 #endif
             }
         }
         .onAppear {
             Task {
-                await hydrationStore.refreshData()
+                await viewModel.refreshData()
+                tempGoal = viewModel.waterIntakeService.goal
             }
         }
     }
     
-    // Debug functions
-    func deleteAllTodaysProgress() async {
-        await hydrationStore.logStore.clearTodayEntries()
-        
-        if hydrationStore.healthKitStatus.isAuthorized {
-            HealthKitManager.shared.deleteAllWaterEntriesForToday()
+    #if DEBUG
+    private var debugMenuSheet: some View {
+        ScrollView {
+            VStack(spacing: 20) {
+                Text("Debug Menu")
+                    .font(.headline)
+                
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Current Progress: \(viewModel.totalFormatted)/\(viewModel.goalFormatted)")
+                        .font(.subheadline)
+                    
+                    Text("Goal percentage: \(viewModel.progressPercentage)")
+                        .font(.subheadline)
+                    
+                    Text("Entries count: \(viewModel.waterIntakeService.todaysEntries.count)")
+                        .font(.subheadline)
+                    
+                    Text("HealthKit authorized: \(viewModel.waterIntakeService.isHealthKitAuthorized ? "Yes" : "No")")
+                        .font(.subheadline)
+                }
+                .padding()
+                .background(Color.secondary.opacity(0.1))
+                .cornerRadius(8)
+                
+                Button("Delete Today's Progress") {
+                    Task {
+                        await viewModel.clearToday()
+                        showingDebugMenu = false
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.red)
+                
+                Button("Set Progress Near Goal (95%)") {
+                    Task {
+                        await viewModel.clearToday()
+                        
+                        let nearGoalAmount = viewModel.waterIntakeService.goal * 0.95
+                        await viewModel.addWater(amount: nearGoalAmount)
+                        
+                        print("Debug: Progress set to \(viewModel.waterIntakeService.total)/\(viewModel.waterIntakeService.goal) (\(viewModel.progressPercentage))")
+                        showingDebugMenu = false
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                
+                Button("Force refresh complications") {
+                    WidgetCenter.shared.reloadTimelines(ofKind: "HydrationWidget")
+                    showingDebugMenu = false
+                }
+                .buttonStyle(.borderedProminent)
+                
+                Button("Close") {
+                    showingDebugMenu = false
+                }
+                .buttonStyle(.bordered)
+            }
+            .padding()
         }
-        
-        await hydrationStore.progress.loadToday()
-        
-        print("Debug: All today's progress deleted. Current total: \(hydrationStore.progress.total)")
     }
-    
-    func setProgressNearGoal() async {
-        await deleteAllTodaysProgress()
-        
-        let nearGoalAmount = hydrationStore.progress.goal * 0.95
-        
-        await hydrationStore.logStore.log(amount: nearGoalAmount)
-        
-        if hydrationStore.healthKitStatus.isAuthorized {
-            HealthKitManager.shared.logWater(amountInML: nearGoalAmount)
-        }
-        
-        await hydrationStore.progress.loadToday()
-        
-        print("Debug: Progress set to \(hydrationStore.progress.total)/\(hydrationStore.progress.goal) (\(Int((hydrationStore.progress.total/hydrationStore.progress.goal)*100))%)")
-    }
+    #endif
 }

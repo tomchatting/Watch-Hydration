@@ -1,10 +1,9 @@
 //
 //  ExtensionDelegate.swift
-//  WaterBoy
+//  Watch Hydration Watch App
 //
 //  Created by Thomas Chatting on 02/05/2025.
 //
-
 
 import WatchKit
 import ClockKit

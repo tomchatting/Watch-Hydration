@@ -10,6 +10,7 @@ import UserNotifications
 
 struct OnboardingView: View {
     var onContinue: () -> Void
+    @StateObject private var viewModel = DIContainer.shared.createHydrationViewModel()
 
     var body: some View {
         ScrollView {
@@ -42,20 +43,21 @@ struct OnboardingView: View {
                     .padding(.top, 10)
 
                 Button("Continue") {
-                    HealthKitManager.shared.requestAuthorization { success, error in
-                        if !success {
-                            print("HealthKit not authorized: \(error?.localizedDescription ?? "Unknown")")
+                    Task {
+                        // First request HealthKit permissions
+                        await viewModel.requestHealthKitPermissions()
+                        
+                        // Then handle notifications
+                        NotificationManager.requestAuthorizationIfNeeded()
+                        UNUserNotificationCenter.current().getNotificationSettings { settings in
+                            if settings.authorizationStatus == .authorized {
+                                NotificationManager.scheduleHydrationSummaryIfNeeded()
+                            }
                         }
+                        
+                        // Continue to main app
+                        onContinue()
                     }
-
-                    NotificationManager.requestAuthorizationIfNeeded()
-                    UNUserNotificationCenter.current().getNotificationSettings { settings in
-                        if settings.authorizationStatus == .authorized {
-                            NotificationManager.scheduleHydrationSummaryIfNeeded()
-                        }
-                    }
-
-                    onContinue()
                 }
                 .buttonStyle(.borderedProminent)
                 .padding(.top, 30)

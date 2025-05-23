@@ -5,6 +5,13 @@
 //  Created by Thomas Chatting on 13/05/2025.
 //
 
+//
+//  WaterInputView.swift
+//  Watch Hydration
+//
+//  Refactored by Claude
+//
+
 import SwiftUI
 import Combine
 import WidgetKit
@@ -20,7 +27,7 @@ struct WaterInputView: View {
     @State private var selectedLiquid: LiquidType = LiquidType.defaultLiquid
     @FocusState private var isEditingAmount: Bool
     @State private var isChoosingLiquid = false
-    @EnvironmentObject private var hydrationStore: HydrationStore
+    @EnvironmentObject private var viewModel: HydrationViewModel
     @Environment(\.accessibilityReduceMotion) var reduceMotion
     @Environment(\.scenePhase) private var scenePhase
     
@@ -132,29 +139,13 @@ struct WaterInputView: View {
                         let currentLiquid = selectedLiquid
                         let valueToLog = liquidAmount * currentLiquid.coefficient
                         
-                        await hydrationStore.logStore.log(amount: valueToLog)
-                        
-                        hydrationStore.healthKitStatus.requestAuthorization {
-                            if hydrationStore.healthKitStatus.isAuthorized {
-                                HealthKitManager.shared.logWater(amountInML: valueToLog)
-                            }
-                        }
-                        
-                        await hydrationStore.refreshData()
-                        
+                        // Animate water decrease first (visual feedback)
                         await MainActor.run {
-                            let goalReached = hydrationStore.progress.total + valueToLog >= hydrationStore.progress.goal
-                            
-                            print("Progress after logging: \(hydrationStore.progress.total)/\(hydrationStore.progress.goal)")
-                            print("Goal reached: \(goalReached), Reduce Motion: \(reduceMotion)")
-                            
-                            if goalReached && !reduceMotion {
-                                print("🎉 Triggering confetti!")
-                                hydrationStore.animationManager.triggerConfetti()
-                            }
+                            animateWaterDecrease()
                         }
                         
-                        animateWaterDecrease()
+                        // Then log the water (after animation starts)
+                        await viewModel.addWater(amount: valueToLog)
                         
                         isLogging = false
                     }
@@ -172,13 +163,13 @@ struct WaterInputView: View {
                 .opacity(0)
 
             // Confetti
-            if hydrationStore.animationManager.showConfetti {
+            if viewModel.shouldShowConfetti && !reduceMotion {
                 ConfettiView()
             }
         }
         .onAppear {
             Task {
-                await hydrationStore.refreshData()
+                await viewModel.refreshData()
             }
         }
     }
@@ -189,4 +180,14 @@ struct WaterInputView: View {
             fillPercent = 0
         }
     }
+}
+
+struct LiquidType: Identifiable, Equatable {
+    let id = UUID()
+    let name: String
+    let color: Color
+    let coefficient: Double
+    
+    static let defaultLiquid = LiquidType(name: "Water", color: .blue, coefficient: 1.0)
+    static let all = [defaultLiquid] // Add your other liquid types here
 }

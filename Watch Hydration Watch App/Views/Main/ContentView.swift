@@ -9,11 +9,9 @@ import SwiftUI
 import UserNotifications
 
 struct ContentView: View {
-    @AppStorage("hydrationGoal") private var goal: Double = 2000
     @AppStorage("hasOnboarded") private var hasOnboarded: Bool = false
     @State private var selectedTab = 0
-    
-    private let defaultGoal: Double = 2000
+    @StateObject private var viewModel = DIContainer.shared.createHydrationViewModel()
     
     var body: some View {
         if !hasOnboarded {
@@ -40,6 +38,7 @@ struct ContentView: View {
                     }
                     .tag(2)
             }
+            .environmentObject(viewModel)
             .onAppear {
                 setupApp()
             }
@@ -47,11 +46,11 @@ struct ContentView: View {
     }
     
     private func setupApp() {
-        if goal == 0 {
-            goal = defaultGoal
-            UserDefaults.standard.set(goal, forKey: "hydrationGoal")
+        Task {
+            await viewModel.waterIntakeService.refreshData()
         }
         
+        // Keep notification setup as is
         NotificationManager.requestAuthorizationIfNeeded()
         UNUserNotificationCenter.current().getNotificationSettings { settings in
             if settings.authorizationStatus == .authorized {

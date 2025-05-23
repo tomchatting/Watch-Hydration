@@ -9,8 +9,7 @@ import SwiftUI
 import HealthKit
 
 struct WaterProgressView: View {
-    @EnvironmentObject private var hydrationStore: HydrationStore
-    
+    @EnvironmentObject private var viewModel: HydrationViewModel
     @State private var forceRefresh = UUID()
     
     private let timeFormatter: DateFormatter = {
@@ -20,13 +19,14 @@ struct WaterProgressView: View {
     }()
 
     var body: some View {
-        let progressRatio = hydrationStore.progress.total / hydrationStore.progress.goal
+        let progressRatio = viewModel.waterIntakeService.progress
         let progressTrim = min(progressRatio, 1.0)
 
         ScrollView {
             VStack(spacing: 20) {
                 waterProgressCircle(progressTrim: progressTrim)
                 goalText
+                motivationalMessage
 
                 VStack(alignment: .leading, spacing: 0) {
                     timelineEntries
@@ -42,7 +42,7 @@ struct WaterProgressView: View {
     
     private func refreshData() {
         Task {
-            await hydrationStore.refreshData()
+            await viewModel.refreshData()
             await MainActor.run {
                 forceRefresh = UUID()
             }
@@ -50,9 +50,16 @@ struct WaterProgressView: View {
     }
 
     private var goalText: some View {
-        Text("Goal: \(hydrationStore.progress.goal < 1000 ? "\(Int(hydrationStore.progress.goal)) mL" : "\(String(format: "%.2f", hydrationStore.progress.goal / 1000)) L")")
+        Text("Goal: \(viewModel.goalFormatted)")
             .font(.footnote)
             .foregroundColor(.secondary)
+    }
+    
+    private var motivationalMessage: some View {
+        Text(viewModel.motivationalMessage)
+            .font(.caption)
+            .foregroundColor(viewModel.progressColor)
+            .multilineTextAlignment(.center)
     }
 
     private func waterProgressCircle(progressTrim: CGFloat) -> some View {
@@ -62,17 +69,23 @@ struct WaterProgressView: View {
             
             Circle()
                 .trim(from: 0, to: progressTrim)
-                .stroke(hydrationStore.progress.total / hydrationStore.progress.goal >= 1.0 ? Color.green : Color.blue, style: StrokeStyle(lineWidth: 10, lineCap: .round))
+                .stroke(viewModel.progressColor, style: StrokeStyle(lineWidth: 10, lineCap: .round))
                 .rotationEffect(.degrees(-90))
             
-            Text(hydrationStore.progress.total < 1000 ? "\(Int(hydrationStore.progress.total)) mL" : "\(String(format: "%.2f", Double(hydrationStore.progress.total/1000))) L")
-                .font(.title3)
+            VStack {
+                Text(viewModel.totalFormatted)
+                    .font(.title3)
+                    .bold()
+                Text(viewModel.progressPercentage)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
         }
-        .frame(width: 80, height: 80)
+        .frame(width: 120, height: 120)
     }
 
     private var timelineEntries: some View {
-        ForEach(hydrationStore.progress.entries.filter { $0.amount > 0 }) { entry in
+        ForEach(viewModel.waterIntakeService.todaysEntries.filter { $0.amount > 0 }) { entry in
             timelineEntryView(for: entry)
         }
     }
