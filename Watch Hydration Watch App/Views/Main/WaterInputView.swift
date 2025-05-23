@@ -24,11 +24,6 @@ struct WaterInputView: View {
     @Environment(\.accessibilityReduceMotion) var reduceMotion
     @Environment(\.scenePhase) private var scenePhase
     
-    @State private var lastCrownChangeTime = Date()
-    @State private var crownVelocity: Double = 0
-    @State private var accelerationLevel: Int = 0
-    @State private var crownScrollTimer: Timer?
-    
     let timer = Timer.publish(every: 0.05, on: .main, in: .common).autoconnect()
     let maxAmount: Double = 1000
 
@@ -167,9 +162,9 @@ struct WaterInputView: View {
                 .accessibilityIdentifier("DrinkButton")
             }
             
-            Slider(value: $crownValue, in: 0...1000, step: 1)
-                .onChange(of: crownValue) { oldValue, newValue in
-                    handleCrownChange(oldValue: oldValue, newValue: newValue)
+            Slider(value: $liquidAmount, in: 0...maxAmount, step: 1)
+                .onChange(of: liquidAmount) { _, newValue in
+                    liquidAmount = newValue
                 }
                 .frame(width: 0, height: 0)
                 .clipped()
@@ -187,70 +182,12 @@ struct WaterInputView: View {
         }
     }
     
-    private func handleCrownChange(oldValue: Double, newValue: Double) {
-        let now = Date()
-        let timeDelta = now.timeIntervalSince(lastCrownChangeTime)
-        let valueDelta = abs(newValue - oldValue)
-        
-        if timeDelta > 0 {
-            crownVelocity = valueDelta / timeDelta
-        }
-        
-        var stepSize: Double = 1
-        
-        // Velocity thresholds for acceleration
-        if crownVelocity > 50 {
-            accelerationLevel = min(accelerationLevel + 1, 4)
-        } else if crownVelocity < 10 {
-            accelerationLevel = max(accelerationLevel - 1, 0)
-        }
-        
-        // Set step size based on acceleration level
-        switch accelerationLevel {
-        case 0: stepSize = 1    // 1mL
-        case 1: stepSize = 5    // 5mL
-        case 2: stepSize = 10   // 10mL
-        case 3: stepSize = 25   // 25mL
-        case 4: stepSize = 50   // 50mL
-        default: stepSize = 1
-        }
-        
-        // Apply the stepped change
-        let direction = newValue > oldValue ? 1.0 : -1.0
-        let adjustedChange = stepSize * direction
-        let newAmount = max(0, min(maxAmount, liquidAmount + adjustedChange))
-        
-        // Only update if the change is significant enough
-        if abs(adjustedChange) >= 1 {
-            liquidAmount = newAmount
-            fillPercent = liquidAmount / maxAmount
-            
-            // Update crown value to match our stepped amount
-            crownValue = liquidAmount
-        }
-        
-        lastCrownChangeTime = now
-        
-        // Reset acceleration level after a period of inactivity
-        crownScrollTimer?.invalidate()
-        crownScrollTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { _ in
-            accelerationLevel = 0
-            crownVelocity = 0
-        }
-        
-        // Provide haptic feedback for larger steps
-        if stepSize >= 10 {
-            WKInterfaceDevice.current().play(.click)
-        }
-    }
-    
     func animateWaterDecrease() {
         isLogging = true
         
         withAnimation(.linear(duration: 0.5)) {
             liquidAmount = 0
             fillPercent = 0
-            crownValue = 0 // Reset crown value too
         }
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
