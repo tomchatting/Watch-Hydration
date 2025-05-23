@@ -189,5 +189,13 @@ struct LiquidType: Identifiable, Equatable {
     let coefficient: Double
     
     static let defaultLiquid = LiquidType(name: "Water", color: .blue, coefficient: 1.0)
-    static let all = [defaultLiquid] // Add your other liquid types here
+    static let all = [
+        defaultLiquid,
+        LiquidType(name: "Coffee", coefficient: 0.8, color: .brown),
+        LiquidType(name: "Juice", coefficient: 0.9, color: .orange),
+        LiquidType(name: "Cola", coefficient: 0.9, color: .gray),
+        LiquidType(name: "Green Tea", coefficient: 0.95, color: .green),
+        LiquidType(name: "Black Tea", coefficient: 0.85, color: .brown),
+        LiquidType(name: "Tea w/ milk", coefficient: 0.9, color: .gray)
+    ]
 }
