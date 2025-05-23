@@ -128,6 +128,7 @@ struct WaterInputView: View {
                 Button("Drink \(selectedLiquid.name)") {
                     Task {
                         isLogging = true
+                        animateWaterDecrease()
                         
                         let currentLiquid = selectedLiquid
                         let valueToLog = liquidAmount * currentLiquid.coefficient
@@ -155,7 +156,6 @@ struct WaterInputView: View {
                         }
                         
                         isLogging = false
-                        animateWaterDecrease()
                     }
                 }
                 .disabled(liquidAmount == 0 || isLogging)
@@ -183,15 +183,9 @@ struct WaterInputView: View {
     }
     
     func animateWaterDecrease() {
-        isLogging = true
-        
         withAnimation(.linear(duration: 0.5)) {
             liquidAmount = 0
             fillPercent = 0
-        }
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-            isLogging = false
         }
     }
 }
