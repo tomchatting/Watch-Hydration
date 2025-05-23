@@ -191,11 +191,11 @@ struct LiquidType: Identifiable, Equatable {
     static let defaultLiquid = LiquidType(name: "Water", color: .blue, coefficient: 1.0)
     static let all = [
         defaultLiquid,
-        LiquidType(name: "Coffee", coefficient: 0.8, color: .brown),
-        LiquidType(name: "Juice", coefficient: 0.9, color: .orange),
-        LiquidType(name: "Cola", coefficient: 0.9, color: .gray),
-        LiquidType(name: "Green Tea", coefficient: 0.95, color: .green),
-        LiquidType(name: "Black Tea", coefficient: 0.85, color: .brown),
-        LiquidType(name: "Tea w/ milk", coefficient: 0.9, color: .gray)
+        LiquidType(name: "Coffee",  color: .brown, coefficient: 0.8),
+        LiquidType(name: "Juice", color: .orange, coefficient: 0.9),
+        LiquidType(name: "Cola", color: .gray, coefficient: 0.9),
+        LiquidType(name: "Green Tea", color: .green, coefficient: 0.95),
+        LiquidType(name: "Black Tea", color: .brown, coefficient: 0.85),
+        LiquidType(name: "Tea w/ milk", color: .gray, coefficient: 0.9)
     ]
 }

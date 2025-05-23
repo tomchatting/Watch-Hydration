@@ -48,11 +48,9 @@ struct OnboardingView: View {
                         await viewModel.requestHealthKitPermissions()
                         
                         // Then handle notifications
-                        NotificationManager.requestAuthorizationIfNeeded()
-                        UNUserNotificationCenter.current().getNotificationSettings { settings in
-                            if settings.authorizationStatus == .authorized {
-                                NotificationManager.scheduleHydrationSummaryIfNeeded()
-                            }
+                        let settings = await UNUserNotificationCenter.current().notificationSettings()
+                        if settings.authorizationStatus == .authorized {
+                            NotificationManager.scheduleHydrationSummaryIfNeeded()
                         }
                         
                         // Continue to main app
