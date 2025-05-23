@@ -20,6 +20,17 @@ struct Watch_HydrationApp: App {
                         print("App opened from widget or complication")
                     }
                 }
+                .onReceive(NotificationCenter.default.publisher(for: WKExtension.applicationDidBecomeActiveNotification)) { _ in
+                    Task {
+                        HydrationStore.shared.logStore.refreshIfNeeded()
+                        await HydrationStore.shared.refreshData()
+                    }
+                }
+                .onReceive(NotificationCenter.default.publisher(for: WKExtension.applicationWillResignActiveNotification)) { _ in
+                    Task {
+                        await HydrationStore.shared.logStore.save()
+                    }
+                }
         }
     }
 }

@@ -30,6 +30,7 @@ struct SettingsView: View {
                 }
                 .onChange(of: hydrationStore.progress.goal) { _, newValue in
                     UserDefaults.standard.set(newValue, forKey: "hydrationGoal")
+                    WidgetCenter.shared.reloadTimelines(ofKind: "HydrationWidget")
                 }
                 .onDisappear {
                     let sharedDefaults = UserDefaults(suiteName: "group.com.thomaschatting.Watch-Hydration.Shared")

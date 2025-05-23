@@ -17,16 +17,32 @@ class WaterLogStore: ObservableObject, @unchecked Sendable {
     @Published var totalAmount: Double = 0
 
     private let calendar = Calendar.current
+    private var lastUpdateDate: Date = Date()
     private let storageKey = "WaterLogStore.today"
     private let sharedDefaults = UserDefaults(suiteName: "group.com.thomaschatting.Watch-Hydration.Shared") ?? UserDefaults.standard
 
     init() {
         load()
+        refreshIfNeeded()
+    }
+    
+    private func checkForDayChange() {
+        let calendar = Calendar.current
+        if !calendar.isDate(lastUpdateDate, inSameDayAs: Date()) {
+            // New day detected
+            Task {
+                await resetForNewDay()
+            }
+            lastUpdateDate = Date()
+        }
+    }
+
+    func refreshIfNeeded() {
+        checkForDayChange()
         updateTodayLogs()
         updateTotalAmount()
     }
 
-    // Make this async to ensure proper sequencing
     func log(amount: Double, date: Date = Date()) async {
         let entry = WaterLogEntry(date: date, amount: amount)
         entries.insert(entry, at: 0)
@@ -102,10 +118,15 @@ class WaterLogStore: ObservableObject, @unchecked Sendable {
     func resetForNewDay() async {
         updateTodayLogs()
         updateTotalAmount()
-        UserDefaults.standard.set(Date(), forKey: "\(storageKey).date")
-        sharedDefaults.set(Date(), forKey: "\(storageKey).date")
         
         await save()
+        
+        HydrationStore.shared.saveToUserDefaults()
+        
+        UserDefaults.standard.set(Date(), forKey: "\(storageKey).date")
+        sharedDefaults.set(Date(), forKey: "\(storageKey).date")
+
+        WidgetCenter.shared.reloadTimelines(ofKind: "HydrationWidget")
     }
     
     func clearTodayEntries() async {

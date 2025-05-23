@@ -8,7 +8,7 @@ class HydrationStore: ObservableObject {
     @Published var logStore = WaterLogStore()
     @Published var healthKitStatus = HealthKitAuthStatus()
     @Published var progress = HydrationProgress()
-    @Published var animationManager = BubbleConfettiManager()
+    @Published var animationManager = ConfettiManager()
     
     static let shared: HydrationStore = {
         let instance = HydrationStore()
@@ -17,11 +17,12 @@ class HydrationStore: ObservableObject {
     
     private var cancellables = Set<AnyCancellable>()
     private let sharedDefaults = UserDefaults(suiteName: "group.com.thomaschatting.Watch-Hydration.Shared") ?? UserDefaults.standard
+    private var lastUpdateDate: Date = Date()
     
     private init() {
         setupObservers()
-        
         loadFromUserDefaults()
+        checkForDayChange()
     }
     
     private func setupObservers() {
@@ -31,18 +32,33 @@ class HydrationStore: ObservableObject {
         }.store(in: &cancellables)
         
         logStore.objectWillChange.sink { [weak self] _ in
-            Task {
+            Task { @MainActor in
                 await self?.progress.loadToday()
                 
-                await MainActor.run {
-                    self?.saveToUserDefaults()
-                    
-                    WidgetCenter.shared.reloadTimelines(ofKind: "HydrationWidget")
-                    
-                    self?.objectWillChange.send()
-                }
+                self?.saveToUserDefaults()
+                
+                WidgetCenter.shared.reloadTimelines(ofKind: "HydrationWidget")
+                
+                self?.objectWillChange.send()
             }
         }.store(in: &cancellables)
+    }
+    
+    private func checkForDayChange() {
+        let calendar = Calendar.current
+        if !calendar.isDate(lastUpdateDate, inSameDayAs: Date()) {
+            // New day detected
+            Task {
+                await logStore.resetForNewDay()
+                await refreshData()
+            }
+            lastUpdateDate = Date()
+        }
+    }
+    
+    func refreshIfNeeded() async {
+        checkForDayChange()
+        await refreshData()
     }
     
     func saveToUserDefaults() {
@@ -51,6 +67,7 @@ class HydrationStore: ObservableObject {
         
         sharedDefaults.set(progress.total, forKey: "hydrationTotal")
         sharedDefaults.set(progress.goal, forKey: "hydrationGoal")
+        sharedDefaults.synchronize() // Ensure immediate sync for widgets
     }
     
     func loadFromUserDefaults() {

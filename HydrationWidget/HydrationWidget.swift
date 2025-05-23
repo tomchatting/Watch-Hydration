@@ -32,10 +32,11 @@ struct Provider: TimelineProvider {
         let currentDate = Date()
         let entry = HydrationEntry(date: currentDate, total: total, goal: goal)
         
-        // Create a timeline that refreshes at the end of the day
-        let endOfDay = Calendar.current.date(bySettingHour: 23, minute: 59, second: 59, of: currentDate) ?? currentDate.addingTimeInterval(86400)
+        let calendar = Calendar.current
+        let tomorrow = calendar.date(byAdding: .day, value: 1, to: currentDate)!
+        let startOfTomorrow = calendar.startOfDay(for: tomorrow)
         
-        let timeline = Timeline(entries: [entry], policy: .after(endOfDay))
+        let timeline = Timeline(entries: [entry], policy: .after(startOfTomorrow))
         completion(timeline)
     }
 }
