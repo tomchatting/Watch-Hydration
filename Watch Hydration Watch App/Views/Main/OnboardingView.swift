@@ -10,7 +10,7 @@ import UserNotifications
 
 struct OnboardingView: View {
     var onContinue: () -> Void
-    @StateObject private var viewModel = DIContainer.shared.createHydrationViewModel()
+    @State private var isCompletingOnboarding = false
 
     var body: some View {
         ScrollView {
@@ -44,21 +44,32 @@ struct OnboardingView: View {
 
                 Button("Continue") {
                     Task {
-                        // First request HealthKit permissions
-                        await viewModel.requestHealthKitPermissions()
+                        isCompletingOnboarding = true
                         
-                        // Then handle notifications
-                        let settings = await UNUserNotificationCenter.current().notificationSettings()
-                        if settings.authorizationStatus == .authorized {
-                            NotificationManager.scheduleHydrationSummaryIfNeeded()
+                        // Request HealthKit permissions (show dialog)
+                        let healthKitRepo = HealthKitWaterRepository()
+                        try? await healthKitRepo.requestPermissions()
+                        
+                        // Request notification permissions
+                        NotificationManager.requestAuthorizationIfNeeded()
+                        
+                        // Small delay to let permission dialogs dismiss
+                        try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+                        
+                        // Mark onboarding as complete and restart
+                        await MainActor.run {
+                            onContinue()
                         }
-                        
-                        // Continue to main app
-                        onContinue()
                     }
                 }
+                .disabled(isCompletingOnboarding)
                 .buttonStyle(.borderedProminent)
                 .padding(.top, 30)
+                
+                if isCompletingOnboarding {
+                    ProgressView()
+                        .padding(.top, 10)
+                }
             }
             .padding()
         }
