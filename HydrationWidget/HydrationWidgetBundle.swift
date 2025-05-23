@@ -20,5 +20,6 @@ import SwiftUI
 struct HydrationWidgetBundle: WidgetBundle {
     var body: some Widget {
         HydrationWidget()
+        HourlyHydrationWidget()
     }
 }

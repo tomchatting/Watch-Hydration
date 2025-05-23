@@ -240,7 +240,34 @@ class WaterIntakeService: ObservableObject {
     private func saveToSharedDefaults() {
         sharedDefaults.set(total, forKey: "hydrationTotal")
         sharedDefaults.set(goal, forKey: "hydrationGoal")
+        
+        // Save hourly data for the new hourly widget
+        saveHourlyDataForWidget()
+        
         sharedDefaults.synchronize()
+    }
+    
+    private func saveHourlyDataForWidget() {
+        let hourlyDistribution = hourlyDistribution
+        let calendar = Calendar.current
+        let today = Date()
+        
+        var hourlyData: [HourlyHydrationData] = []
+        
+        for (hour, amount) in hourlyDistribution {
+            if let hourDate = calendar.date(bySettingHour: hour, minute: 0, second: 0, of: today) {
+                hourlyData.append(HourlyHydrationData(
+                    hour: hour,
+                    amount: amount,
+                    timestamp: hourDate
+                ))
+            }
+        }
+        
+        // Save to shared defaults for widget access
+        if let encoded = try? JSONEncoder().encode(hourlyData) {
+            sharedDefaults.set(encoded, forKey: "hourlyHydrationData")
+        }
     }
 }
 
@@ -254,6 +281,8 @@ class NotificationService {
     }
     
     func scheduleWidgetUpdate() {
+        // Update both widgets
         WidgetCenter.shared.reloadTimelines(ofKind: "HydrationWidget")
+        WidgetCenter.shared.reloadTimelines(ofKind: "HourlyHydrationWidget")
     }
 }
