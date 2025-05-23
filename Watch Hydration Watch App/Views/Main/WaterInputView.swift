@@ -128,7 +128,6 @@ struct WaterInputView: View {
                 Button("Drink \(selectedLiquid.name)") {
                     Task {
                         isLogging = true
-                        animateWaterDecrease()
                         
                         let currentLiquid = selectedLiquid
                         let valueToLog = liquidAmount * currentLiquid.coefficient
@@ -154,6 +153,8 @@ struct WaterInputView: View {
                                 hydrationStore.animationManager.triggerConfetti()
                             }
                         }
+                        
+                        animateWaterDecrease()
                         
                         isLogging = false
                     }
